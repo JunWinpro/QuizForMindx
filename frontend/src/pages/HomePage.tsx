@@ -23,7 +23,7 @@ export default function HomePage() {
         </div>
 
         <h1 className="animate-fade-up stagger-1" style={{ fontFamily:"'Fraunces',serif",fontWeight:900,fontSize:"clamp(36px,6vw,72px)",lineHeight:1.08,color:"var(--navy)",marginBottom:20,letterSpacing:"-1.5px",maxWidth:800 }}>
-          Học từ vựng <span style={{ color:"var(--emerald)" }}>thông minh</span>,<br/>nhớ mãi không quên
+          Học từ vựng <span style={{ color:"var(--emerald)" }}>thông minh</span>, nhớ mãi không quên
         </h1>
 
         <p className="animate-fade-up stagger-2" style={{ fontSize:"clamp(15px,2vw,18px)",color:"var(--muted)",marginBottom:40,maxWidth:520,lineHeight:1.7 }}>

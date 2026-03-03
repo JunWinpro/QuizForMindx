@@ -20,7 +20,7 @@ export default function DeckList() {
       .finally(() => setLoading(false));
   }, []);
 
-  const langs  = ["all", "en", "ja", "fr", "zh", "de"];
+  const langs = ["all", "en", "ja", "fr", "zh", "de", "ko"];
   const levels = ["all", "Cơ bản", "Trung cấp", "Advanced"];
 
   const filtered = decks.filter(d =>
@@ -49,7 +49,7 @@ export default function DeckList() {
           <span style={{ fontSize:12,fontWeight:600,color:"var(--muted)",letterSpacing:"0.05em",textTransform:"uppercase",marginRight:4 }}>Ngôn ngữ:</span>
           {langs.map(l => (
             <button key={l} onClick={() => setLang(l)} className={`filter-pill${lang===l?" active":""}`}>
-              {l === "all" ? "Tất cả" : `${FLAG[l] || ""} ${l.toUpperCase()}`}
+              {l === "all" ? "Tất cả" : `${FLAG[l] || "🌐"} ${l.toUpperCase()}`}
             </button>
           ))}
           <div style={{ width:1,height:18,background:"var(--border)",margin:"0 4px" }}/>
