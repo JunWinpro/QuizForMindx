@@ -1,68 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --navy: #0D1B2A; --navy-2: #1B2E44;
+  --emerald: #00C896; --emerald-d: #00A87F;
+  --gold: #F5A623; --cream: #F9F6EF; --cream-2: #EDE9E0;
+  --text: #1A1A2E; --muted: #6B7280; --border: #E5E0D8;
+  --shadow: 0 4px 24px rgba(13,27,42,.08);
+  --shadow-lg: 0 12px 48px rgba(13,27,42,.14);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Outfit',sans-serif; background: var(--cream); color: var(--text); -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--cream-2); }
+::-webkit-scrollbar-thumb { background: var(--navy-2); border-radius: 3px; }
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes float   { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-9px); } }
+@keyframes shimmer { 0% { background-position:-400px 0; } 100% { background-position:400px 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-fade-up { animation: fadeUp .5s ease both; }
+.animate-float   { animation: float 3.2s ease-in-out infinite; }
+.stagger-1 { animation-delay:.06s; } .stagger-2 { animation-delay:.12s; }
+.stagger-3 { animation-delay:.18s; } .stagger-4 { animation-delay:.24s; }
+.stagger-5 { animation-delay:.30s; } .stagger-6 { animation-delay:.36s; }
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+.flip-card { perspective: 1200px; }
+.flip-card-inner { transition: transform .65s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; position: relative; }
+.flip-card-inner.flipped { transform: rotateY(180deg); }
+.flip-card-front, .flip-card-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.flip-card-back { transform: rotateY(180deg); }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+.skeleton { background: linear-gradient(90deg,var(--cream-2) 25%,var(--cream) 50%,var(--cream-2) 75%); background-size:400px 100%; animation: shimmer 1.4s infinite; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--emerald),var(--gold)); border-radius:2px; transition:width .5s ease; }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+.deck-card { background:white; border:1.5px solid var(--border); border-radius:20px; padding:24px; transition:all .3s cubic-bezier(.4,0,.2,1); position:relative; overflow:hidden; }
+.deck-card::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; background:linear-gradient(90deg,var(--emerald),var(--gold)); transform:scaleX(0); transform-origin:left; transition:transform .3s ease; }
+.deck-card:hover::before { transform:scaleX(1); }
+.deck-card:hover { border-color:var(--emerald)!important; box-shadow:0 16px 48px rgba(0,200,150,.12)!important; transform:translateY(-4px); }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+.input-field { width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:12px; font-family:'Outfit',sans-serif; font-size:14px; background:white; color:var(--text); transition:border-color .2s,box-shadow .2s; outline:none; }
+.input-field:focus { border-color:var(--emerald); box-shadow:0 0 0 3px rgba(0,200,150,.12); }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
+.hero-bg { background-image: radial-gradient(circle at 18% 50%,rgba(0,200,150,.08) 0%,transparent 50%), radial-gradient(circle at 82% 18%,rgba(245,166,35,.06) 0%,transparent 42%); }
