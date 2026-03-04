@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { loginApi, registerApi } from "../api/auth";
+import { useAuth } from "../context/AuthContext";
 
 interface AuthPageProps {
   type: "login" | "register";
@@ -12,6 +14,14 @@ export default function AuthPage({ type }: AuthPageProps) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  const { login } = useAuth();
+
+  const showToast = (type: "success" | "error", msg: string) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -22,13 +32,40 @@ export default function AuthPage({ type }: AuthPageProps) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
+    setErrors({});
+    try {
+      if (mode === "login") {
+        const res = await loginApi(form.email, form.password);
+        if (res?.success) {
+          login(res.token, res.user);
+          showToast("success", `Chào mừng trở lại, ${res.user.displayName}! 👋`);
+          setTimeout(() => navigate("/decks"), 1000);
+        } else {
+          setErrors({ general: "Đăng nhập thất bại" });
+          showToast("error", "Đăng nhập thất bại");
+        }
+      } else {
+        const res = await registerApi(form.email, form.password, form.name);
+        if (res?.success) {
+          login(res.token, res.user);
+          showToast("success", `Tạo tài khoản thành công! Chào ${res.user.displayName} 🎉`);
+          setTimeout(() => navigate("/decks"), 1000);
+        } else {
+          setErrors({ general: "Đăng ký thất bại" });
+          showToast("error", "Đăng ký thất bại");
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      const msg = err?.response?.data?.message || "Lỗi server, thử lại sau";
+      setErrors({ general: msg });
+      showToast("error", msg);
+    } finally {
       setLoading(false);
-      navigate("/decks");
-    }, 1200);
+    }
   };
 
   const benefits = [
@@ -42,13 +79,27 @@ export default function AuthPage({ type }: AuthPageProps) {
   return (
     <div style={{ minHeight: "calc(100vh - 64px)", display: "flex" }}>
 
+      {/* ── Toast notification ── */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: 20, right: 20, zIndex: 9999,
+          background: toast.type === "success" ? "#00c896" : "#FF6B6B",
+          color: toast.type === "success" ? "var(--navy)" : "white",
+          padding: "14px 20px", borderRadius: 12, fontWeight: 600, fontSize: 14,
+          boxShadow: "0 4px 20px rgba(0,0,0,.25)",
+          animation: "slideIn .3s ease",
+          maxWidth: 320,
+        }}>
+          {toast.msg}
+        </div>
+      )}
+
       {/* ── Left panel (decorative) — hidden on mobile ── */}
       <div className="hidden md:flex" style={{
         flex: "0 0 420px", background: "linear-gradient(145deg, var(--navy), var(--navy-2))",
         flexDirection: "column", justifyContent: "center", padding: "60px 48px",
         position: "relative", overflow: "hidden",
       }}>
-        {/* Blobs */}
         <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "rgba(0,200,150,.08)", top: -60, right: -80, pointerEvents: "none" }}/>
         <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: "rgba(245,166,35,.06)", bottom: 40, left: -40, pointerEvents: "none" }}/>
 
@@ -77,7 +128,6 @@ export default function AuthPage({ type }: AuthPageProps) {
           ))}
         </div>
 
-        {/* Testimonial */}
         <div style={{ marginTop: 48, background: "rgba(255,255,255,.06)", borderRadius: 16, padding: "20px 24px", border: "1px solid rgba(255,255,255,.1)" }}>
           <p style={{ fontSize: 14, color: "rgba(255,255,255,.8)", lineHeight: 1.6, fontStyle: "italic", marginBottom: 12 }}>
             "LexiLearn giúp mình đạt IELTS 7.5 chỉ sau 3 tháng. Hệ thống luyện tập rất thông minh!"
@@ -100,7 +150,6 @@ export default function AuthPage({ type }: AuthPageProps) {
       }}>
         <div className="animate-fade-up" style={{ width: "100%", maxWidth: 420 }}>
 
-          {/* Form header */}
           <div style={{ marginBottom: 32 }}>
             <h2 style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 28, color: "var(--navy)", marginBottom: 8 }}>
               {mode === "login" ? "Chào mừng trở lại 👋" : "Tạo tài khoản miễn phí 🎉"}
@@ -111,6 +160,17 @@ export default function AuthPage({ type }: AuthPageProps) {
                 : "Bắt đầu học từ vựng thông minh ngay hôm nay"}
             </p>
           </div>
+
+          {/* General error banner */}
+          {errors.general && (
+            <div style={{
+              background: "rgba(255,107,107,.1)", border: "1.5px solid rgba(255,107,107,.4)",
+              borderRadius: 10, padding: "12px 16px", marginBottom: 20,
+              fontSize: 14, color: "#FF6B6B", fontWeight: 500,
+            }}>
+              ⚠️ {errors.general}
+            </div>
+          )}
 
           {/* Social login */}
           <button style={{
@@ -130,7 +190,6 @@ export default function AuthPage({ type }: AuthPageProps) {
             Tiếp tục với Google
           </button>
 
-          {/* Divider */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
             <div style={{ flex: 1, height: 1, background: "var(--border)" }}/>
             <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>hoặc đăng nhập bằng email</span>
@@ -149,6 +208,7 @@ export default function AuthPage({ type }: AuthPageProps) {
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   className="input-field"
+                  style={{ borderColor: errors.name ? "#FF6B6B" : undefined }}
                 />
                 {errors.name && <p style={{ fontSize: 12, color: "#FF6B6B", marginTop: 4 }}>{errors.name}</p>}
               </div>
@@ -199,7 +259,6 @@ export default function AuthPage({ type }: AuthPageProps) {
               {errors.password && <p style={{ fontSize: 12, color: "#FF6B6B", marginTop: 4 }}>{errors.password}</p>}
             </div>
 
-            {/* Password strength (register only) */}
             {mode === "register" && form.password.length > 0 && (
               <div>
                 <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
@@ -247,7 +306,6 @@ export default function AuthPage({ type }: AuthPageProps) {
               : mode === "login" ? "Đăng nhập →" : "Tạo tài khoản miễn phí 🎉"}
           </button>
 
-          {/* Toggle mode */}
           <p style={{ textAlign: "center", fontSize: 14, color: "var(--muted)", marginTop: 24 }}>
             {mode === "login" ? "Chưa có tài khoản? " : "Đã có tài khoản? "}
             <button
