@@ -4,7 +4,10 @@ export interface Deck {
   name: string;
   description?: string;
   language: string;
-  cardCount?: number;
-  level?: string;
-  color?: string;
+  isPublic: boolean;
+  cardCount: number;
+  ownerId?: string;
+  ownerName?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

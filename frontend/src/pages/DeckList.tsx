@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api/axios";
 import type { Deck } from "../types/deck";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 
 const FLAG: Record<string, string> = { en:"🇬🇧", ja:"🇯🇵", fr:"🇫🇷", zh:"🇨🇳", de:"🇩🇪", ko:"🇰🇷" };
@@ -14,6 +15,7 @@ const [decks, setDecks] = useState<Deck[]>([]);
   const [search,  setSearch]  = useState("");
   const [lang,    setLang]    = useState("all");
   const [level,   setLevel]   = useState("all");
+  const { user } = useAuth();
 useEffect(() => {
   let mounted = true;
   setLoading(true);
@@ -39,26 +41,7 @@ api.get("/decks/public")
     mounted = false;
   };
 }, []);
-useEffect(() => {
-  setLoading(true);
 
-  api.get("/decks/public")
-    .then((res) => {
-      if (res?.data?.success) {
-        setDecks(res.data.data || []);
-      } else {
-        setDecks([]);
-      }
-    })
-    .catch((err) => {
-      console.error("Fetch decks error:", err);
-      setDecks([]);
-    })
-    .finally(() => {
-      setLoading(false);
-    });
-
-}, []);
 
   const langs = ["all", "en", "ja", "fr", "zh", "de", "ko"];
   const levels = ["all", "Cơ bản", "Trung cấp", "Advanced"];
@@ -76,6 +59,11 @@ useEffect(() => {
       <div className="animate-fade-up" style={{ marginBottom:32 }}>
         <h1 style={{ fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:"clamp(26px,4vw,38px)",color:"var(--navy)",marginBottom:8 }}>Bộ Flashcard</h1>
         <p style={{ color:"var(--muted)",fontSize:15 }}>Khám phá {decks.length}+ bộ từ vựng được tuyển chọn kỹ lưỡng</p>
+        {user && (
+          <Link to="/my-decks" style={{ display:"inline-flex",alignItems:"center",gap:8,marginTop:16,background:"var(--navy)",color:"white",padding:"11px 24px",borderRadius:12,fontWeight:700,fontSize:14,textDecoration:"none",boxShadow:"0 4px 16px rgba(13,27,42,.15)" }}>
+            ✍️ Tạo deck của bạn
+          </Link>
+        )}
       </div>
 
       {/* Filter panel */}

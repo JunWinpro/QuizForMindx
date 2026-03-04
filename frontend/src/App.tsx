@@ -6,6 +6,8 @@ import DeckDetail from "./pages/DeckDetail";
 import ProgressPage from "./pages/ProgressPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import AuthPage from "./pages/AuthPage";
+import MyDecksPage from "./pages/Mydeckspage";
+import DeckManage from "./pages/DeckManage";
 
 export default function App() {
   return (
@@ -20,6 +22,8 @@ export default function App() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/login"       element={<AuthPage type="login" />} />
           <Route path="/register"    element={<AuthPage type="register" />} />
+          <Route path="/my-decks"    element={<MyDecksPage />} />
+          <Route path="/decks/:id/manage" element={<DeckManage />} />
         </Routes>
       </div>
     </BrowserRouter>

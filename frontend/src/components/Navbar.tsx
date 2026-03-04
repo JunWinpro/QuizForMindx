@@ -87,6 +87,10 @@ export default function Navbar() {
                       style={{ display:"block", padding:"9px 12px", borderRadius:8, fontSize:13, color:"rgba(255,255,255,.8)", textDecoration:"none", fontWeight:500 }}>
                       👤 Hồ sơ cá nhân
                     </Link>
+                    <Link to="/my-decks" onClick={() => setDropdownOpen(false)}
+                      style={{ display:"block", padding:"9px 12px", borderRadius:8, fontSize:13, color:"rgba(255,255,255,.8)", textDecoration:"none", fontWeight:500 }}>
+                      📚 Deck của tôi
+                    </Link>
                     <Link to="/progress" onClick={() => setDropdownOpen(false)}
                       style={{ display:"block", padding:"9px 12px", borderRadius:8, fontSize:13, color:"rgba(255,255,255,.8)", textDecoration:"none", fontWeight:500 }}>
                       📊 Tiến trình học

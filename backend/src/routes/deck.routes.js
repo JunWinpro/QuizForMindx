@@ -5,25 +5,25 @@ const {
   getUserDecks,
   updateDeck,
   deleteDeck,
+  getDeckById
 } = require('../controllers/deck.controller');
 const { getDeckCards, createCard, getCardsByDeck, updateCard, deleteCard } = require('../controllers/card.controller');
 const authMiddleware = require('../middlewares/Auth.middleware');
 
 const router = express.Router();
 
-// ─── Public (Stage 1) ───────────────────────────────────────────────────────
+// ─── Public Routes (không cần auth) ───────────────────────────────────────
 router.get('/public', getPublicDecks);
-
-// /api/decks/:id/cards — public (no auth, deck must be isPublic)
+router.get('/:id', getDeckById);     // ⭐ thêm dòng này
 router.get('/:id/cards', getDeckCards);
 
-// ─── Authenticated Deck CRUD (Stage 3) ─────────────────────────────────────
+// ─── Authenticated Routes - phải đặt trước route /:id ────────────────────
+router.get('/my', authMiddleware, getUserDecks); // GET /api/decks/my - lấy decks của user
 router.post('/', authMiddleware, createDeck);
-router.get('/', authMiddleware, getUserDecks);
 router.put('/:id', authMiddleware, updateDeck);
 router.delete('/:id', authMiddleware, deleteDeck);
 
-// ─── Authenticated Card CRUD (Stage 4) ─────────────────────────────────────
+// ─── Authenticated Card CRUD ─────────────────────────────────────────────
 router.post('/:deckId/cards', authMiddleware, createCard);
 router.get('/:deckId/cards/manage', authMiddleware, getCardsByDeck);
 router.put('/:deckId/cards/:cardId', authMiddleware, updateCard);

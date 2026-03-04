@@ -85,7 +85,30 @@ const getUserDecks = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+// GET /api/decks/:id
+const getDeckById = async (req, res) => {
+  try {
+    const deck = await Deck.findById(req.params.id);
 
+    if (!deck) {
+      return res.status(404).json({
+        success: false,
+        message: 'Deck not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: deck
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
 // PUT /api/decks/:id
 const updateDeck = async (req, res) => {
   try {
@@ -139,4 +162,11 @@ const deleteDeck = async (req, res) => {
   }
 };
 
-module.exports = { getPublicDecks, createDeck, getUserDecks, updateDeck, deleteDeck };
+module.exports = {
+  getPublicDecks,
+  createDeck,
+  getUserDecks,
+  updateDeck,
+  deleteDeck,
+  getDeckById
+};
