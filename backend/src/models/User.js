@@ -1,15 +1,50 @@
-import mongoose, { Schema, Document } from "mongoose";
+const mongoose = require('mongoose');
 
-export interface IUser extends Document {
-  name: string;
-  email: string;
-}
+const UserSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    passwordHash: {
+      type: String,
+      required: true,
+    },
+    displayName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    photoUrl: {
+      type: String,
+      default: '',
+    },
+    role: {
+      type: String,
+      enum: ['user', 'teacher'],
+      default: 'user',
+    },
+    settings: {
+      dailyGoal: { type: Number, default: 20 },
+      defaultLanguage: { type: String, default: 'en' },
+      notificationsEnabled: { type: Boolean, default: false },
+    },
+    stats: {
+      streak: { type: Number, default: 0 },
+      longestStreak: { type: Number, default: 0 },
+      lastStudyDate: { type: Date, default: null },
+    },
+    pushSubscription: {
+      type: Object,
+      default: null,
+    },
+  },
+  { timestamps: true }
+);
 
-const userSchema = new Schema<IUser>({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-});
 
-const User = mongoose.model<IUser>("User", userSchema);
 
-export default User;
+module.exports = mongoose.model('User', UserSchema);

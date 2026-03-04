@@ -3,22 +3,62 @@ import api from "../api/axios";
 import type { Deck } from "../types/deck";
 import { Link } from "react-router-dom";
 
+
 const FLAG: Record<string, string> = { en:"🇬🇧", ja:"🇯🇵", fr:"🇫🇷", zh:"🇨🇳", de:"🇩🇪", ko:"🇰🇷" };
 const LEVEL_BG:   Record<string, string> = { "Cơ bản":"rgba(69,183,209,.15)", "Trung cấp":"rgba(245,166,35,.15)", "Advanced":"rgba(0,200,150,.15)" };
 const LEVEL_TEXT: Record<string, string> = { "Cơ bản":"#45B7D1",             "Trung cấp":"#D4890A",             "Advanced":"#00A87F"              };
 
 export default function DeckList() {
-  const [decks,   setDecks]   = useState<Deck[]>([]);
+const [decks, setDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
   const [search,  setSearch]  = useState("");
   const [lang,    setLang]    = useState("all");
   const [level,   setLevel]   = useState("all");
+useEffect(() => {
+  let mounted = true;
+  setLoading(true);
 
-  useEffect(() => {
-    api.get("/decks/public")
-      .then(res => setDecks(res.data))
-      .finally(() => setLoading(false));
-  }, []);
+api.get("/decks/public")
+    .then((res) => {
+
+      if (!mounted) return;
+      if (res?.data?.success) {
+        setDecks(res.data.data || []);
+      } else {
+        console.warn("Không lấy được decks:", res?.data);
+      }
+    })
+    .catch((err) => {
+      console.error("Lỗi khi gọi /api/decks/public", err);
+    })
+    .finally(() => {
+      if (mounted) setLoading(false);
+    });
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+useEffect(() => {
+  setLoading(true);
+
+  api.get("/decks/public")
+    .then((res) => {
+      if (res?.data?.success) {
+        setDecks(res.data.data || []);
+      } else {
+        setDecks([]);
+      }
+    })
+    .catch((err) => {
+      console.error("Fetch decks error:", err);
+      setDecks([]);
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+
+}, []);
 
   const langs = ["all", "en", "ja", "fr", "zh", "de", "ko"];
   const levels = ["all", "Cơ bản", "Trung cấp", "Advanced"];

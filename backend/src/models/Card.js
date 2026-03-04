@@ -17,10 +17,12 @@ const CardSchema = new mongoose.Schema(
     },
     example: String,
     phonetic: String,
-    audioUrl: String,
-    imageUrl: String,
+    audioUrl: { type: String, default: '' },
+    imageUrl: { type: String, default: '' },
   },
   { timestamps: true }
 );
+
+CardSchema.index({ deckId: 1, createdAt: 1 });
 
 module.exports = mongoose.model('Card', CardSchema);
