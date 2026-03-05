@@ -10,6 +10,7 @@ interface AudioPlayerProps {
 const LANG_TTS: Record<string, string> = {
   en: "en-US", ja: "ja-JP", fr: "fr-FR",
   zh: "zh-CN", de: "de-DE", ko: "ko-KR",
+  vi: "vi-VN",
 };
 
 export default function AudioPlayer({ audioUrl, text, language = "en", size = "md" }: AudioPlayerProps) {

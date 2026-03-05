@@ -8,6 +8,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import AuthPage from "./pages/AuthPage";
 import MyDecksPage from "./pages/Mydeckspage";
 import DeckManage from "./pages/DeckManage";
+import StudyPage from "./pages/Studypage";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/register"    element={<AuthPage type="register" />} />
           <Route path="/my-decks"    element={<MyDecksPage />} />
           <Route path="/decks/:id/manage" element={<DeckManage />} />
+          <Route path="/study/:deckId" element={<StudyPage />} />
         </Routes>
       </div>
     </BrowserRouter>

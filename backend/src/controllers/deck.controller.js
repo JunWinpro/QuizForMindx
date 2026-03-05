@@ -14,7 +14,7 @@ const getPublicDecks = async (req, res) => {
 
     const [decks, total] = await Promise.all([
       Deck.find({ isPublic: true })
-        .select('_id name language cardCount description createdAt ownerName')
+        .select('_id name language frontLanguage backLanguage cardCount description createdAt ownerName')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -36,7 +36,7 @@ const getPublicDecks = async (req, res) => {
 // POST /api/decks
 const createDeck = async (req, res) => {
   try {
-    const { name, description, language, isPublic } = req.body;
+    const { name, description, language, isPublic, frontLanguage, backLanguage } = req.body;
 
     if (!name || !language) {
       return res.status(400).json({ success: false, message: 'name and language are required' });
@@ -49,6 +49,8 @@ const createDeck = async (req, res) => {
       name,
       description: description || '',
       language,
+      frontLanguage: frontLanguage || language || '',
+      backLanguage: backLanguage || 'vi',
       isPublic: Boolean(isPublic),
       ownerId: req.user.userId,
       ownerName: req.user.displayName || '',
@@ -85,6 +87,7 @@ const getUserDecks = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 // GET /api/decks/:id
 const getDeckById = async (req, res) => {
   try {
@@ -109,6 +112,7 @@ const getDeckById = async (req, res) => {
     });
   }
 };
+
 // PUT /api/decks/:id
 const updateDeck = async (req, res) => {
   try {
@@ -118,7 +122,7 @@ const updateDeck = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
 
-    const { name, description, language, isPublic } = req.body;
+    const { name, description, language, isPublic, frontLanguage, backLanguage } = req.body;
     if (language && !LANGUAGE_WHITELIST.includes(language)) {
       return res.status(400).json({ success: false, message: 'Invalid language' });
     }
@@ -131,6 +135,8 @@ const updateDeck = async (req, res) => {
           ...(description !== undefined && { description }),
           ...(language && { language }),
           ...(isPublic !== undefined && { isPublic: Boolean(isPublic) }),
+          ...(frontLanguage !== undefined && { frontLanguage }),
+          ...(backLanguage !== undefined && { backLanguage }),
         },
       },
       { new: true, runValidators: true }

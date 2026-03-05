@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
@@ -149,7 +149,10 @@ export default function DeckDetail() {
   const [cardForm, setCardForm] = useState<CardForm>(emptyCardForm);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    msg: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
@@ -190,7 +193,10 @@ export default function DeckDetail() {
     if (!id) return;
     let mounted = true;
     setLoading(true);
-    Promise.all([api.get(`/decks/${id}`).catch(() => null), api.get(`/decks/${id}/cards`).catch(() => null)])
+    Promise.all([
+      api.get(`/decks/${id}`).catch(() => null),
+      api.get(`/decks/${id}/cards`).catch(() => null),
+    ])
       .then(([deckRes, cardsRes]) => {
         if (!mounted) return;
         if (deckRes?.data?.success) setDeck(deckRes.data.data);
@@ -230,7 +236,9 @@ export default function DeckDetail() {
     try {
       const res = await api.put(`/decks/${id}/cards/${editCard._id}`, cardForm);
       if (res.data?.success) {
-        setCards((prev) => prev.map((c) => (c._id === editCard._id ? res.data.data : c)));
+        setCards((prev) =>
+          prev.map((c) => (c._id === editCard._id ? res.data.data : c)),
+        );
         setEditCard(null);
         setCardForm(emptyCardForm);
         showToast("Cập nhật thẻ thành công! ✅");
@@ -248,7 +256,8 @@ export default function DeckDetail() {
     try {
       await api.delete(`/decks/${id}/cards/${deleteCard._id}`);
       setCards((prev) => prev.filter((c) => c._id !== deleteCard._id));
-      if (deck) setDeck({ ...deck, cardCount: Math.max(0, deck.cardCount - 1) });
+      if (deck)
+        setDeck({ ...deck, cardCount: Math.max(0, deck.cardCount - 1) });
       setDeleteCard(null);
       showToast("Đã xóa thẻ");
     } catch (err: any) {
@@ -259,28 +268,56 @@ export default function DeckDetail() {
   };
 
   const openEditCard = (card: Card) => {
-    setCardForm({ front: card.front, back: card.back, example: (card as any).example || "" });
+    setCardForm({
+      front: card.front,
+      back: card.back,
+      example: (card as any).example || "",
+    });
     setEditCard(card);
     setShowAddCard(false);
   };
 
-  const CardFormFields = ({ onSubmit, label }: { onSubmit: () => void; label: string }) => (
+  const CardFormFields = ({
+    onSubmit,
+    label,
+  }: {
+    onSubmit: () => void;
+    label: string;
+  }) => (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div>
-        <label style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", display: "block", marginBottom: 6 }}>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text)",
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
           Mặt trước (từ) *
         </label>
         <input
           type="text"
           value={cardForm.front}
-          onChange={(e) => setCardForm((f) => ({ ...f, front: e.target.value }))}
+          onChange={(e) =>
+            setCardForm((f) => ({ ...f, front: e.target.value }))
+          }
           placeholder="Ví dụ: apple"
           className="input-field"
           style={{ width: "100%", boxSizing: "border-box" }}
         />
       </div>
       <div>
-        <label style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", display: "block", marginBottom: 6 }}>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text)",
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
           Mặt sau (nghĩa) *
         </label>
         <input
@@ -293,12 +330,22 @@ export default function DeckDetail() {
         />
       </div>
       <div>
-        <label style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", display: "block", marginBottom: 6 }}>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text)",
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
           Ví dụ (tuỳ chọn)
         </label>
         <textarea
           value={cardForm.example}
-          onChange={(e) => setCardForm((f) => ({ ...f, example: e.target.value }))}
+          onChange={(e) =>
+            setCardForm((f) => ({ ...f, example: e.target.value }))
+          }
           placeholder="I eat an apple every day."
           rows={2}
           className="input-field"
@@ -311,9 +358,13 @@ export default function DeckDetail() {
         style={{
           padding: "13px",
           background:
-            saving || !cardForm.front.trim() || !cardForm.back.trim() ? "var(--cream-2)" : "var(--navy)",
+            saving || !cardForm.front.trim() || !cardForm.back.trim()
+              ? "var(--cream-2)"
+              : "var(--navy)",
           color:
-            saving || !cardForm.front.trim() || !cardForm.back.trim() ? "var(--muted)" : "white",
+            saving || !cardForm.front.trim() || !cardForm.back.trim()
+              ? "var(--muted)"
+              : "white",
           border: "none",
           borderRadius: 12,
           fontWeight: 700,
@@ -377,7 +428,11 @@ export default function DeckDetail() {
               >
                 {known}
               </div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>Đã nhớ ✅</div>
+              <div
+                style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}
+              >
+                Đã nhớ ✅
+              </div>
             </div>
             <div
               style={{
@@ -397,7 +452,11 @@ export default function DeckDetail() {
               >
                 {unknown}
               </div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>Cần ôn thêm ❌</div>
+              <div
+                style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}
+              >
+                Cần ôn thêm ❌
+              </div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
@@ -470,7 +529,9 @@ export default function DeckDetail() {
           >
             ← Thoát
           </button>
-          <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>
+          <span
+            style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}
+          >
             {current + 1} / {cards.length}
           </span>
         </div>
@@ -486,8 +547,15 @@ export default function DeckDetail() {
           <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
 
-        <div className="flip-card" style={{ marginBottom: 24 }} onClick={() => setCardFlip((f) => !f)}>
-          <div className={`flip-card-inner${cardFlip ? " flipped" : ""}`} style={{ height: 300 }}>
+        <div
+          className="flip-card"
+          style={{ marginBottom: 24 }}
+          onClick={() => setCardFlip((f) => !f)}
+        >
+          <div
+            className={`flip-card-inner${cardFlip ? " flipped" : ""}`}
+            style={{ height: 300 }}
+          >
             <div
               className="flip-card-front"
               style={{
@@ -597,8 +665,17 @@ export default function DeckDetail() {
           </div>
         </div>
 
-        <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>
-          {cardFlip ? "Đánh giá mức độ ghi nhớ của bạn" : "Nhấn vào thẻ để xem đáp án"}
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: 13,
+            color: "var(--muted)",
+            marginBottom: 20,
+          }}
+        >
+          {cardFlip
+            ? "Đánh giá mức độ ghi nhớ của bạn"
+            : "Nhấn vào thẻ để xem đáp án"}
         </p>
 
         {cardFlip && (
@@ -663,7 +740,11 @@ export default function DeckDetail() {
           }}
         >
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton" style={{ borderRadius: 18, height: 180 }} />
+            <div
+              key={i}
+              className="skeleton"
+              style={{ borderRadius: 18, height: 180 }}
+            />
           ))}
         </div>
       </div>
@@ -711,6 +792,25 @@ export default function DeckDetail() {
             >
               Danh sách Flashcards
             </h1>
+            {deck && (
+              <div
+                style={{
+                  fontSize: 14,
+                  color: "var(--muted)",
+                  marginTop: 12,
+                  padding: "8px 12px",
+                  background: "var(--cream-2)",
+                  borderRadius: 10,
+                  display: "inline-flex",
+                  gap: 16,
+                }}
+              >
+                <span>
+                  📖 Học: {FLAG[(deck as any).frontLanguage || deck.language]} →{" "}
+                  {FLAG[(deck as any).backLanguage || "vi"]}
+                </span>
+              </div>
+            )}
             <p style={{ color: "var(--muted)", fontSize: 15 }}>
               📇 {cards.length} thẻ · Nhấn vào thẻ để lật
             </p>
@@ -725,7 +825,8 @@ export default function DeckDetail() {
                   borderRadius: 10,
                   border: "none",
                   cursor: "pointer",
-                  background: tab === "cards" ? "var(--navy)" : "var(--cream-2)",
+                  background:
+                    tab === "cards" ? "var(--navy)" : "var(--cream-2)",
                   color: tab === "cards" ? "white" : "var(--navy)",
                   fontWeight: 700,
                 }}
@@ -740,7 +841,8 @@ export default function DeckDetail() {
                     borderRadius: 10,
                     border: "none",
                     cursor: "pointer",
-                    background: tab === "manage" ? "var(--navy)" : "var(--cream-2)",
+                    background:
+                      tab === "manage" ? "var(--navy)" : "var(--cream-2)",
                     color: tab === "manage" ? "white" : "var(--navy)",
                     fontWeight: 700,
                   }}
@@ -749,7 +851,26 @@ export default function DeckDetail() {
                 </button>
               )}
             </div>
-
+            <Link
+              to={`/study/${id}`}
+              style={{
+                background: "var(--emerald)",
+                color: "var(--navy)",
+                padding: "12px 20px",
+                borderRadius: 14,
+                fontWeight: 700,
+                fontSize: 15,
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                boxShadow: "0 8px 24px rgba(0,200,150,.25)",
+                fontFamily: "'Outfit',sans-serif",
+                whiteSpace: "nowrap",
+              }}
+            >
+              🚀 Bắt đầu học
+            </Link>
             <button
               onClick={() => setStudyMode(true)}
               style={{
@@ -784,7 +905,9 @@ export default function DeckDetail() {
             <div
               key={card._id}
               className={`animate-fade-up stagger-${Math.min(i + 1, 6)}`}
-              onClick={() => setFlipped((f) => ({ ...f, [card._id]: !f[card._id] }))}
+              onClick={() =>
+                setFlipped((f) => ({ ...f, [card._id]: !f[card._id] }))
+              }
               style={{ cursor: "pointer", position: "relative" }}
             >
               {/* overlay controls (chỉ hiện với owner) */}
@@ -816,10 +939,6 @@ export default function DeckDetail() {
                   >
                     🔊
                   </button>
-
-
-
-
                 </div>
               )}
 
@@ -871,7 +990,8 @@ export default function DeckDetail() {
                     style={{
                       position: "absolute",
                       inset: 0,
-                      background: "linear-gradient(135deg,var(--navy),var(--navy-2))",
+                      background:
+                        "linear-gradient(135deg,var(--navy),var(--navy-2))",
                       borderRadius: 18,
                       display: "flex",
                       alignItems: "center",
@@ -993,9 +1113,17 @@ export default function DeckDetail() {
                         🔊
                       </button>
                     </div>
-                    <div style={{ color: "var(--muted)", fontSize: 14 }}>{card.back}</div>
+                    <div style={{ color: "var(--muted)", fontSize: 14 }}>
+                      {card.back}
+                    </div>
                     {(card as any).example && (
-                      <div style={{ marginTop: 8, fontSize: 13, color: "var(--muted)" }}>
+                      <div
+                        style={{
+                          marginTop: 8,
+                          fontSize: 13,
+                          color: "var(--muted)",
+                        }}
+                      >
                         {(card as any).example}
                       </div>
                     )}
@@ -1075,9 +1203,12 @@ export default function DeckDetail() {
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <p style={{ margin: 0 }}>
-              Bạn có chắc muốn xóa thẻ <strong>{deleteCard.front}</strong>? Hành động này không thể hoàn tác.
+              Bạn có chắc muốn xóa thẻ <strong>{deleteCard.front}</strong>? Hành
+              động này không thể hoàn tác.
             </p>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div
+              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
+            >
               <button
                 onClick={() => setDeleteCard(null)}
                 style={{

@@ -9,6 +9,8 @@ interface DeckInfo {
   name: string;
   description?: string;
   language: string;
+  frontLanguage?: string;
+  backLanguage?: string; 
   isPublic: boolean;
   cardCount: number;
   ownerId: string;
@@ -20,7 +22,7 @@ interface CardForm {
   back: string;
   example?: string;
 }
-
+const FLAG: Record<string, string> = { en: "🇬🇧", ja: "🇯🇵", fr: "🇫🇷", zh: "🇨🇳", de: "🇩🇪", ko: "🇰🇷", vi: "🇻🇳" };
 const emptyForm: CardForm = { front: "", back: "", example: "" };
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -68,7 +70,7 @@ export default function DeckManage() {
   const isOwner = !!(user && deck && user._id === deck.ownerId);
 
   // TTS helper
-  const langMap: Record<string, string> = { en: "en-US", ja: "ja-JP", fr: "fr-FR", zh: "zh-CN", de: "de-DE", ko: "ko-KR" };
+  const langMap: Record<string, string> = { en: "en-US", ja: "ja-JP", fr: "fr-FR", zh: "zh-CN", de: "de-DE", ko: "ko-KR", vi: "vi-VN" };
   const playAudio = (text: string) => {
     if (!text) return;
     if (!("speechSynthesis" in window)) { showToast("Trình duyệt không hỗ trợ TTS", "error"); return; }
@@ -164,7 +166,20 @@ export default function DeckManage() {
         <div>
           <button onClick={() => navigate(-1)} style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--muted)" }}>← Quay lại</button>
           <h1 style={{ margin: "6px 0 0 0", fontFamily: "'Fraunces', serif" }}>{deck.name}</h1>
-          <div style={{ color: "var(--muted)" }}>{deck.cardCount} thẻ · {deck.language}</div>
+          <div style={{ color: "var(--muted)" }}>{deck.cardCount} thẻ · {deck.language}</div>{deck && (
+  <div style={{ 
+    fontSize: 13, 
+    color: "var(--muted)", 
+    marginTop: 8,
+    background: "var(--cream-2)",
+    padding: "4px 10px",
+    borderRadius: 8,
+    display: "inline-flex",
+    gap: 8
+  }}>
+    <span>Học: {FLAG[deck.frontLanguage || deck.language]} → {FLAG[deck.backLanguage || "vi"]}</span>
+  </div>
+)}
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>

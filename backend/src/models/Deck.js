@@ -13,6 +13,15 @@ const DeckSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // Thêm 2 field mới
+    frontLanguage: {
+      type: String,
+      default: '',  // ngôn ngữ mặt trước (từ cần học), ví dụ: 'ko', 'ja'
+    },
+    backLanguage: {
+      type: String,
+      default: 'vi', // ngôn ngữ mặt sau (nghĩa), mặc định tiếng Việt
+    },
     isPublic: {
       type: Boolean,
       default: false,

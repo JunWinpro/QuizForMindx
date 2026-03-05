@@ -4,17 +4,36 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import type { Deck } from "../types/deck";
 
-const FLAG: Record<string, string> = { en: "🇬🇧", ja: "🇯🇵", fr: "🇫🇷", zh: "🇨🇳", de: "🇩🇪", ko: "🇰🇷" };
-const LANGS = ["en", "ja", "fr", "zh", "de", "ko"];
+const FLAG: Record<string, string> = { en: "🇬🇧", ja: "🇯🇵", fr: "🇫🇷", zh: "🇨🇳", de: "🇩🇪", ko: "🇰🇷", vi: "🇻🇳" };
+const LANGS = ["en", "ja", "fr", "zh", "de", "ko", "vi"];
+
+const LANGUAGES = [
+  { value: "vi", label: "🇻🇳 Tiếng Việt" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "ja", label: "🇯🇵 日本語" },
+  { value: "ko", label: "🇰🇷 한국어" },
+  { value: "zh", label: "🇨🇳 中文" },
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "de", label: "🇩🇪 Deutsch" },
+];
 
 interface DeckForm {
   name: string;
   description: string;
   language: string;
+  frontLanguage: string;
+  backLanguage: string;
   isPublic: boolean;
 }
 
-const emptyForm: DeckForm = { name: "", description: "", language: "en", isPublic: true };
+const emptyForm: DeckForm = { 
+  name: "", 
+  description: "", 
+  language: "en", 
+  frontLanguage: "en",
+  backLanguage: "vi",
+  isPublic: true 
+};
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
@@ -57,8 +76,6 @@ function DeckForm({ form, setForm, onSubmit, saving, label }: {
   saving: boolean;
   label: string;
 }) {
-  const LANGS = ["en", "ja", "fr", "zh", "de", "ko"];
-  const FLAG: Record<string, string> = { en:"🇬🇧", ja:"🇯🇵", fr:"🇫🇷", zh:"🇨🇳", de:"🇩🇪", ko:"🇰🇷" };
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
       <div>
@@ -74,7 +91,7 @@ function DeckForm({ form, setForm, onSubmit, saving, label }: {
           rows={3} className="input-field" style={{ width:"100%", boxSizing:"border-box", resize:"vertical" }} />
       </div>
       <div>
-        <label style={{ fontSize:13, fontWeight:600, color:"var(--text)", display:"block", marginBottom:8 }}>Ngôn ngữ</label>
+        <label style={{ fontSize:13, fontWeight:600, color:"var(--text)", display:"block", marginBottom:8 }}>Ngôn ngữ chính</label>
         <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
           {LANGS.map(l => (
             <button key={l} onClick={() => setForm(f => ({ ...f, language: l }))}
@@ -87,6 +104,32 @@ function DeckForm({ form, setForm, onSubmit, saving, label }: {
           ))}
         </div>
       </div>
+
+      {/* Thêm 2 dropdown mới */}
+      <div>
+        <label style={{ fontSize:13, fontWeight:600, color:"var(--text)", display:"block", marginBottom:6 }}>Ngôn ngữ mặt trước (từ cần học)</label>
+        <select 
+          value={form.frontLanguage} 
+          onChange={e => setForm(f => ({ ...f, frontLanguage: e.target.value }))} 
+          className="input-field"
+          style={{ width:"100%", padding: "10px 12px", borderRadius: 10 }}
+        >
+          {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label style={{ fontSize:13, fontWeight:600, color:"var(--text)", display:"block", marginBottom:6 }}>Ngôn ngữ mặt sau (nghĩa)</label>
+        <select 
+          value={form.backLanguage} 
+          onChange={e => setForm(f => ({ ...f, backLanguage: e.target.value }))} 
+          className="input-field"
+          style={{ width:"100%", padding: "10px 12px", borderRadius: 10 }}
+        >
+          {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+        </select>
+      </div>
+
       <div style={{ display:"flex", alignItems:"center", gap:12 }}>
         <label style={{ fontSize:13, fontWeight:600, color:"var(--text)" }}>Công khai</label>
         <button onClick={() => setForm(f => ({ ...f, isPublic: !f.isPublic }))}
@@ -144,7 +187,17 @@ export default function MyDecksPage() {
   }, [user]);
 
   const openCreate = () => { setForm(emptyForm); setShowCreate(true); };
-  const openEdit = (d: Deck) => { setForm({ name: d.name, description: d.description || "", language: d.language, isPublic: d.isPublic }); setEditDeck(d); };
+  const openEdit = (d: Deck) => { 
+    setForm({ 
+      name: d.name, 
+      description: d.description || "", 
+      language: d.language, 
+      frontLanguage: (d as any).frontLanguage || d.language || "en",
+      backLanguage: (d as any).backLanguage || "vi",
+      isPublic: d.isPublic 
+    }); 
+    setEditDeck(d); 
+  };
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;
@@ -258,6 +311,11 @@ export default function MyDecksPage() {
                   <span style={{ fontSize: 13, color: "var(--muted)" }}>{FLAG[deck.language]} {deck.language.toUpperCase()}</span>
                   <span style={{ color: "var(--border)" }}>·</span>
                   <span style={{ fontSize: 13, color: "var(--muted)" }}>📇 {deck.cardCount} thẻ</span>
+                </div>
+
+                {/* Hiển thị thông tin ngôn ngữ học */}
+                <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16, background: "var(--cream-2)", padding: "6px 10px", borderRadius: 8 }}>
+                  <span>📖 Học: {FLAG[(deck as any).frontLanguage || deck.language]} → {FLAG[(deck as any).backLanguage || "vi"]}</span>
                 </div>
 
                 {/* Actions */}
