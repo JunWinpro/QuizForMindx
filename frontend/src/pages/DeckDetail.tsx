@@ -21,6 +21,17 @@ interface CardForm {
   example: string;
 }
 const emptyCardForm: CardForm = { front: "", back: "", example: "" };
+
+interface ImportRow {
+  front: string;
+  back: string;
+  example?: string;
+  phonetic?: string;
+  audioUrl?: string;
+  imageUrl?: string;
+  valid: boolean;
+}
+
 const FLAG: Record<string, string> = {
   en: "🇬🇧",
   ja: "🇯🇵",
@@ -60,7 +71,7 @@ function Modal({
           borderRadius: 24,
           padding: "32px 36px",
           width: "100%",
-          maxWidth: 480,
+          maxWidth: 680,
           boxShadow: "0 24px 60px rgba(0,0,0,.2)",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -161,6 +172,76 @@ export default function DeckDetail() {
   };
 
   const isOwner = !!(user && deck && user._id === deck.ownerId);
+
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importing, setImporting] = useState(false);
+
+  const parseImportText = (text: string): ImportRow[] =>
+    text
+      .split("\n")
+      .map((l) => l.trimEnd())
+      .filter((l) => l.trim() !== "")
+      .map((line) => {
+        const cols = line.split("\t");
+        const front = cols[0]?.trim() ?? "";
+        const back = cols[1]?.trim() ?? "";
+        return {
+          front,
+          back,
+          example: cols[2]?.trim() ?? "",
+          phonetic: cols[3]?.trim() ?? "",
+          audioUrl: cols[4]?.trim() ?? "",
+          imageUrl: cols[5]?.trim() ?? "",
+          valid: !!front && !!back,
+        };
+      });
+
+  const parsedRows = parseImportText(importText);
+  const validRows = parsedRows.filter((r) => r.valid);
+
+  const submitImport = async () => {
+    if (!id || validRows.length === 0) return;
+    setImporting(true);
+    let successCount = 0;
+    let failCount = 0;
+    const newCards: Card[] = [];
+    try {
+      await Promise.all(
+        validRows.map(async (row) => {
+          try {
+            const payload: Record<string, string> = {
+              front: row.front,
+              back: row.back,
+            };
+            if (row.example) payload.example = row.example;
+            if (row.phonetic) payload.phonetic = row.phonetic;
+            if (row.audioUrl) payload.audioUrl = row.audioUrl;
+            if (row.imageUrl) payload.imageUrl = row.imageUrl;
+            const res = await api.post(`/decks/${id}/cards`, payload);
+            if (res.data?.success) {
+              newCards.push(res.data.data);
+              successCount++;
+            } else failCount++;
+          } catch {
+            failCount++;
+          }
+        }),
+      );
+      setCards((p) => [...p, ...newCards]);
+      if (deck) setDeck({ ...deck, cardCount: deck.cardCount + successCount });
+      setShowImport(false);
+      setImportText("");
+      showToast(
+        failCount === 0
+          ? `Đã thêm ${successCount} thẻ thành công 🎉`
+          : `Thêm ${successCount} thẻ, thất bại ${failCount}`,
+        failCount === 0 ? "success" : "error",
+      );
+    } finally {
+      setImporting(false);
+    }
+  };
 
   // --- TTS dùng Google Translate ---
   const playAudio = (text: string, forceLang?: string) => {
@@ -1009,6 +1090,21 @@ export default function DeckDetail() {
             <div style={{ color: "var(--muted)" }}>{cards.length} thẻ</div>
             <div style={{ display: "flex", gap: 12 }}>
               <button
+                onClick={() => setShowImport(true)}
+                style={{
+                  background: "var(--cream-2)",
+                  color: "var(--navy)",
+                  padding: "10px 16px",
+                  borderRadius: 12,
+                  border: "1.5px solid var(--border)",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 14,
+                }}
+              >
+                📥 Import
+              </button>
+              <button
                 onClick={() => {
                   setCardForm(emptyCardForm);
                   setShowAddCard(true);
@@ -1144,6 +1240,218 @@ export default function DeckDetail() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Import Modal */}
+      {showImport && (
+        <Modal
+          title="📥 Import thẻ hàng loạt"
+          onClose={() => {
+            setShowImport(false);
+            setImportText("");
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div
+              style={{
+                background: "var(--cream-2)",
+                borderRadius: 10,
+                padding: "12px 14px",
+                fontSize: 12,
+                lineHeight: 1.7,
+              }}
+            >
+              <div
+                style={{
+                  fontWeight: 700,
+                  marginBottom: 6,
+                  color: "var(--navy)",
+                }}
+              >
+                📋 Cấu trúc:
+              </div>
+              <div style={{ color: "var(--muted)", marginBottom: 6 }}>
+                Mỗi thẻ = <strong>1 dòng</strong> · Các cột cách nhau bằng{" "}
+                <strong>TAB</strong>
+              </div>
+<code style={{ display: "block", background: "rgba(0,0,0,0.05)", padding: "8px 10px", borderRadius: 6, fontSize: 11, lineHeight: 2, overflowX: "auto" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, max-content)", gap: "0 20px" }}>
+                  {["front","back","example","phonetic","",""].map(h => (
+                    <span key={h} style={{ color: "#888", fontWeight: 700 }}>{h}</span>
+                  ))}
+                  {["abandon","từ bỏ","He abandoned the plan","/əˈbændən/","",""].map((v,i) => (
+                    <span key={i} style={{ color: "var(--navy)" }}>{v || <span style={{color:"#ccc"}}>—</span>}</span>
+                  ))}
+                  {["severe","nghiêm trọng","The storm was severe","/sɪˈvɪə/","",""].map((v,i) => (
+                    <span key={i} style={{ color: "var(--navy)" }}>{v || <span style={{color:"#ccc"}}>—</span>}</span>
+                  ))}
+                </div>
+              </code>
+              <div style={{ marginTop: 6, color: "var(--muted)" }}>
+                Chỉ <strong>front</strong> và <strong>back</strong> là bắt buộc.
+                Các cột sau có thể để trống.
+              </div>
+            </div>
+
+            <textarea
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              placeholder={
+                "abandon\t từ bỏ\t He abandoned the plan\t /əˈbændən/\nsevere\t nghiêm trọng\t The storm was severe\t /sɪˈvɪə/"
+              }
+              rows={8}
+              className="input-field"
+              style={{
+                fontFamily: "monospace",
+                fontSize: 13,
+                resize: "vertical",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+            />
+
+            {parsedRows.length > 0 && (
+              <div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "var(--muted)",
+                    marginBottom: 6,
+                  }}
+                >
+                  Xem trước:{" "}
+                  <span style={{ color: "#00a87f" }}>
+                    {validRows.length} hợp lệ
+                  </span>
+                  {parsedRows.length - validRows.length > 0 && (
+                    <span style={{ color: "#ff6b6b", marginLeft: 8 }}>
+                      {parsedRows.length - validRows.length} bị bỏ qua
+                    </span>
+                  )}
+                </div>
+                <div
+                  style={{
+                    maxHeight: 180,
+                    overflowY: "auto",
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                  }}
+                >
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: 12,
+                    }}
+                  >
+                    <thead>
+                      <tr
+                        style={{
+                          background: "var(--cream-2)",
+                          position: "sticky",
+                          top: 0,
+                        }}
+                      >
+                        {["#", "Front", "Back", "Example", "Phonetic"].map(
+                          (h) => (
+                            <th
+                              key={h}
+                              style={{
+                                padding: "6px 10px",
+                                textAlign: "left",
+                                fontWeight: 600,
+                                color: "var(--muted)",
+                                borderBottom: "1px solid var(--border)",
+                              }}
+                            >
+                              {h}
+                            </th>
+                          ),
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedRows.map((row, i) => (
+                        <tr
+                          key={i}
+                          style={{
+                            opacity: row.valid ? 1 : 0.4,
+                            background: row.valid
+                              ? undefined
+                              : "rgba(255,107,107,0.05)",
+                          }}
+                        >
+                          <td
+                            style={{
+                              padding: "5px 10px",
+                              color: "var(--muted)",
+                            }}
+                          >
+                            {i + 1}
+                          </td>
+                          <td
+                            style={{
+                              padding: "5px 10px",
+                              fontWeight: 600,
+                              color: "var(--navy)",
+                            }}
+                          >
+                            {row.front || "—"}
+                          </td>
+                          <td style={{ padding: "5px 10px" }}>
+                            {row.back || "—"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "5px 10px",
+                              color: "var(--muted)",
+                            }}
+                          >
+                            {row.example}
+                          </td>
+                          <td
+                            style={{
+                              padding: "5px 10px",
+                              color: "var(--muted)",
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {row.phonetic}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={submitImport}
+              disabled={importing || validRows.length === 0}
+              style={{
+                padding: "13px",
+                background:
+                  validRows.length === 0 ? "var(--cream-2)" : "var(--navy)",
+                color: validRows.length === 0 ? "var(--muted)" : "white",
+                border: "none",
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 15,
+                cursor:
+                  validRows.length === 0 || importing
+                    ? "not-allowed"
+                    : "pointer",
+                fontFamily: "'Outfit',sans-serif",
+              }}
+            >
+              {importing
+                ? "⏳ Đang thêm..."
+                : `✅ Thêm ${validRows.length > 0 ? validRows.length + " " : ""}thẻ`}
+            </button>
+          </div>
+        </Modal>
       )}
 
       {/* Add Card Modal */}
