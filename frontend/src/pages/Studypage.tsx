@@ -5,6 +5,7 @@ import { useStudySession } from "../hooks/Usestudysession";
 import FlashcardFlip from "../components/Flashcardflip";
 import StudyControls from "../components/Studycontrols";
 import SessionSummary from "../components/Sessionsummary";
+import { playGoogleTTS } from "../utils/tts";
 
 interface DeckMeta {
   name: string;
@@ -22,11 +23,7 @@ const LANG_MAP: Record<string, string> = {
 };
 
 function playTTS(text: string, lang: string) {
-  if (!text || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = LANG_MAP[lang] || "en-US";
-  window.speechSynthesis.speak(u);
+  playGoogleTTS(text, lang);
 }
 
 export default function StudyPage() {

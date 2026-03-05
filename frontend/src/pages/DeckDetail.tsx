@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import type { Card } from "../types/card";
+import { playGoogleTTS } from "../utils/tts";
 
 interface DeckInfo {
   _id: string;
@@ -161,32 +162,10 @@ export default function DeckDetail() {
 
   const isOwner = !!(user && deck && user._id === deck.ownerId);
 
-  // --- Thêm TTS (client-side SpeechSynthesis) ---
-  const langMap: Record<string, string> = {
-    en: "en-US",
-    ja: "ja-JP",
-    fr: "fr-FR",
-    zh: "zh-CN",
-    de: "de-DE",
-    ko: "ko-KR",
-  };
-
+  // --- TTS dùng Google Translate ---
   const playAudio = (text: string, forceLang?: string) => {
-    try {
-      if (!("speechSynthesis" in window)) {
-        showToast("Trình duyệt không hỗ trợ TTS", "error");
-        return;
-      }
-      const utter = new SpeechSynthesisUtterance(text);
-      // ưu tiên ngôn ngữ của deck nếu có mapping
-      const bcp = forceLang || (deck && langMap[deck.language]) || "en-US";
-      utter.lang = bcp;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
-    } catch (e) {
-      // defensive
-      showToast("Không thể phát âm thanh", "error");
-    }
+    const lang = forceLang || deck?.language || "en";
+    playGoogleTTS(text, lang);
   };
 
   useEffect(() => {

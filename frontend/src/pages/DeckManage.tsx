@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import type { Card } from "../types/card";
+import { playGoogleTTS } from "../utils/tts";
 
 interface DeckInfo {
   _id: string;
@@ -71,18 +72,10 @@ export default function DeckManage() {
 
   // TTS helper
   const langMap: Record<string, string> = { en: "en-US", ja: "ja-JP", fr: "fr-FR", zh: "zh-CN", de: "de-DE", ko: "ko-KR", vi: "vi-VN" };
-  const playAudio = (text: string) => {
-    if (!text) return;
-    if (!("speechSynthesis" in window)) { showToast("Trình duyệt không hỗ trợ TTS", "error"); return; }
-    try {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = (deck && langMap[deck.language]) || "en-US";
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    } catch (e) {
-      showToast("Không thể phát âm", "error");
-    }
-  };
+const playAudio = (text: string) => {
+  if (!text) return;
+  playGoogleTTS(text, deck?.language || "en");
+};
 
   useEffect(() => {
     if (!id) return;
