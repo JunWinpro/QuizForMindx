@@ -6,6 +6,7 @@ require('dotenv').config();
 const deckRoutes = require('./routes/deck.routes');
 const authRoutes = require('./routes/Auth.routes');
 const studyRoutes = require('./routes/study.routes');
+const srsRoutes = require('./routes/srs.routes');   // ← Stage 6
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/decks', deckRoutes);
 app.use('/api/study', studyRoutes);
+app.use('/api/srs', srsRoutes);                     // ← Stage 6
 
 // ─── Health check ───────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -29,7 +31,7 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
-// ─── Global error handler ────────────────────────────────────────────────────
+// ─── Global error handler ───────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err.stack);
