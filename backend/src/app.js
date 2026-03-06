@@ -6,7 +6,8 @@ require('dotenv').config();
 const deckRoutes = require('./routes/deck.routes');
 const authRoutes = require('./routes/Auth.routes');
 const studyRoutes = require('./routes/study.routes');
-const srsRoutes = require('./routes/srs.routes');   // ← Stage 6
+const srsRoutes = require('./routes/srs.routes');
+const quizRoutes = require('./routes/Quiz.routes');   // ← Stage 7
 
 const app = express();
 
@@ -19,7 +20,8 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/decks', deckRoutes);
 app.use('/api/study', studyRoutes);
-app.use('/api/srs', srsRoutes);                     // ← Stage 6
+app.use('/api/srs', srsRoutes);
+app.use('/api/quiz', quizRoutes);                     // ← Stage 7
 
 // ─── Health check ───────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

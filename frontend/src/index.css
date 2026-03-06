@@ -89,3 +89,4 @@ body { margin: 0;font-family: 'Outfit',sans-serif; background: var(--cream); col
   .nav-desktop-auth  { display: flex; align-items: center; gap: 10px; }
   .nav-hamburger     { display: none !important; }
 }
+

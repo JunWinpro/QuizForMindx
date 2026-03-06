@@ -4,6 +4,7 @@ import type { Deck } from "../types/deck";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+
 const FLAG: Record<string, string> = {
   en: "🇬🇧",
   ja: "🇯🇵",
@@ -29,7 +30,26 @@ export default function DeckList() {
   const [search, setSearch] = useState("");
   const [lang, setLang] = useState("all");
   const [level, setLevel] = useState("all");
+  const [dueByDeck, setDueByDeck] = useState<Record<string, number>>({});
+  const [srsLoaded, setSrsLoaded] = useState(false);
+
   const { user } = useAuth();
+  useEffect(() => {
+    if (!user) return;
+    api
+      .get("/srs/due")
+      .then((res) => {
+        if (res.data?.success) {
+          const map: Record<string, number> = {};
+          (res.data.data ?? []).forEach((card: any) => {
+            if (card.deckId) map[card.deckId] = (map[card.deckId] || 0) + 1;
+          });
+          setDueByDeck(map);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setSrsLoaded(true)); // ← thêm dòng này
+  }, [user]);
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -230,6 +250,18 @@ export default function DeckList() {
         >
           {filtered.map((deck, i) => {
             const d = deck as any;
+            const dueForDeck = srsLoaded
+              ? (dueByDeck[deck._id] ?? 0)
+              : deck.cardCount;
+            const progressPct =
+              deck.cardCount > 0
+                ? Math.max(
+                    0,
+                    Math.round(
+                      ((deck.cardCount - dueForDeck) / deck.cardCount) * 100,
+                    ),
+                  )
+                : 0;
             return (
               <div
                 key={deck._id}
@@ -297,23 +329,6 @@ export default function DeckList() {
                   >
                     {deck.description}
                   </p>
-                  {(deck as any).frontLanguage &&
-                    (deck as any).backLanguage && (
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "var(--muted)",
-                          marginBottom: 12,
-                          background: "var(--cream-2)",
-                          padding: "4px 8px",
-                          borderRadius: 6,
-                          display: "inline-block",
-                        }}
-                      >
-                        {FLAG[(deck as any).frontLanguage]} →{" "}
-                        {FLAG[(deck as any).backLanguage]}
-                      </div>
-                    )}
 
                   <div
                     style={{
@@ -324,7 +339,14 @@ export default function DeckList() {
                       marginBottom: 20,
                     }}
                   >
-                    <div className="progress-fill" style={{ width: "35%" }} />
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${progressPct}%`,
+                        transition: "width 0.6s ease",
+                      }}
+                      title={`${progressPct}% hoàn thành · ${dueForDeck} từ cần ôn hôm nay`}
+                    />
                   </div>
 
                   <div
@@ -341,8 +363,15 @@ export default function DeckList() {
                         fontWeight: 500,
                       }}
                     >
-                      {FLAG[deck.language]} {deck.language.toUpperCase()} · 📇{" "}
+                       
                       {deck.cardCount} cards
+                      · 📇{" "}
+                      {(deck as any).frontLanguage && (deck as any).backLanguage && (
+                        <>
+                          {" "}·{" "}
+                          {(deck as any).frontLanguage.toUpperCase()} → {(deck as any).backLanguage.toUpperCase()}
+                        </>
+                      )}
                     </span>
                     <Link
                       to={`/decks/${deck._id}`}
