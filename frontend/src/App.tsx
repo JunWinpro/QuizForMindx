@@ -9,11 +9,11 @@ import AuthPage from "./pages/AuthPage";
 import MyDecksPage from "./pages/Mydeckspage";
 import StudyPage from "./pages/Studypage";
 import SchedulePage from "./pages/SchedulePage";
-// Stage 7 — Quiz Mode
 import QuizSetupPage from "./pages/QuizSetupPage";
 import QuizPlayPage from "./pages/QuizPlayPage";
 import QuizResultPage from "./pages/QuizResultPage";
 import QuizHistoryPage from "./pages/QuizHistoryPage";
+import SettingsPage from "./pages/Settingspage";
 
 export default function App() {
   return (
@@ -21,7 +21,7 @@ export default function App() {
       <Navbar />
       <div>
         <Routes>
-          {/* ── Core ── */}
+
           <Route path="/"            element={<HomePage />} />
           <Route path="/decks"       element={<DeckList />} />
           <Route path="/decks/:id"   element={<DeckDetail />} />
@@ -38,6 +38,7 @@ export default function App() {
           <Route path="/quiz/history"           element={<QuizHistoryPage />} />
           <Route path="/quiz/result/:resultId"  element={<QuizResultPage />} />
           <Route path="/quiz/play/:deckId"      element={<QuizPlayPage />} />
+          <Route path="/settings"              element={<SettingsPage />} />
         </Routes>
       </div>
     </BrowserRouter>
