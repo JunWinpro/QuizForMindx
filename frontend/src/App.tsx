@@ -14,6 +14,8 @@ import QuizPlayPage from "./pages/QuizPlayPage";
 import QuizResultPage from "./pages/QuizResultPage";
 import QuizHistoryPage from "./pages/QuizHistoryPage";
 import SettingsPage from "./pages/Settingspage";
+import SavedDecksPage from "./pages/Saveddeckspage";
+
 
 export default function App() {
   return (
@@ -33,7 +35,7 @@ export default function App() {
           <Route path="/study/:deckId" element={<StudyPage />} />
           <Route path="/schedule"    element={<SchedulePage />} />
           <Route path="/study/due"   element={<SchedulePage />} />
-
+<Route path="/saved-decks" element={<SavedDecksPage />} />
           <Route path="/quiz"                   element={<QuizSetupPage />} />
           <Route path="/quiz/history"           element={<QuizHistoryPage />} />
           <Route path="/quiz/result/:resultId"  element={<QuizResultPage />} />

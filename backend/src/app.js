@@ -8,7 +8,8 @@ const authRoutes  = require('./routes/Auth.routes');
 const studyRoutes = require('./routes/study.routes');
 const srsRoutes   = require('./routes/srs.routes');
 const quizRoutes  = require('./routes/Quiz.routes');
-const statsRoutes = require('./routes/stats.routes');   // ← Stage 8
+const statsRoutes     = require('./routes/stats.routes');
+const savedDeckRoutes = require('./routes/savedDeck.routes');
 
 const app = express();
 
@@ -23,7 +24,8 @@ app.use('/api/decks', deckRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/srs',   srsRoutes);
 app.use('/api/quiz',  quizRoutes);
-app.use('/api/stats', statsRoutes);                    // ← Stage 8
+app.use('/api/stats',       statsRoutes);
+app.use('/api/saved-decks', savedDeckRoutes);
 
 // ─── Health check ───────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

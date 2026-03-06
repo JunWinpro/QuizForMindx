@@ -30,26 +30,55 @@ export default function DeckList() {
   const [search, setSearch] = useState("");
   const [lang, setLang] = useState("all");
   const [level, setLevel] = useState("all");
-  const [dueByDeck, setDueByDeck] = useState<Record<string, number>>({});
-  const [srsLoaded, setSrsLoaded] = useState(false);
+
+  // savedIds: set deckId đã lưu
+  // progressByDeck: learnedPercent từ /saved-decks (chỉ deck đã lưu mới có)
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [progressByDeck, setProgressByDeck] = useState<Record<string, number>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const { user } = useAuth();
+
+  // Load saved decks + progress (1 call, thay thế cả /srs/due trước đây)
   useEffect(() => {
     if (!user) return;
-    api
-      .get("/srs/due")
-      .then((res) => {
+    api.get("/saved-decks")
+      .then(res => {
         if (res.data?.success) {
-          const map: Record<string, number> = {};
-          (res.data.data ?? []).forEach((card: any) => {
-            if (card.deckId) map[card.deckId] = (map[card.deckId] || 0) + 1;
+          const ids = new Set<string>();
+          const prog: Record<string, number> = {};
+          (res.data.data ?? []).forEach((item: any) => {
+            const id = String(item.deck._id);
+            ids.add(id);
+            // learnedPercent = % cards có repetitions >= 1 (đã học ít nhất 1 lần)
+            prog[id] = item.progress?.learnedPercent ?? 0;
           });
-          setDueByDeck(map);
+          setSavedIds(ids);
+          setProgressByDeck(prog);
         }
       })
-      .catch(() => {})
-      .finally(() => setSrsLoaded(true)); // ← thêm dòng này
+      .catch(() => {});
   }, [user]);
+
+  const handleToggleSave = async (deckId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user || savingId) return;
+    setSavingId(deckId);
+    try {
+      if (savedIds.has(deckId)) {
+        await api.delete(`/saved-decks/${deckId}`);
+        setSavedIds(prev => { const s = new Set(prev); s.delete(deckId); return s; });
+        setProgressByDeck(prev => { const p = { ...prev }; delete p[deckId]; return p; });
+      } else {
+        await api.post(`/saved-decks/${deckId}`);
+        setSavedIds(prev => new Set(prev).add(deckId));
+        // Vừa lưu, chưa học → progress 0
+        setProgressByDeck(prev => ({ ...prev, [deckId]: 0 }));
+      }
+    } catch {} finally { setSavingId(null); }
+  };
+
+
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -250,18 +279,9 @@ export default function DeckList() {
         >
           {filtered.map((deck, i) => {
             const d = deck as any;
-            const dueForDeck = srsLoaded
-              ? (dueByDeck[deck._id] ?? 0)
-              : deck.cardCount;
-            const progressPct =
-              deck.cardCount > 0
-                ? Math.max(
-                    0,
-                    Math.round(
-                      ((deck.cardCount - dueForDeck) / deck.cardCount) * 100,
-                    ),
-                  )
-                : 0;
+            const isSaved = savedIds.has(deck._id);
+            // Chỉ deck đã lưu mới có progress thực; chưa lưu = 0%
+            const progressPct = isSaved ? (progressByDeck[deck._id] ?? 0) : 0;
             return (
               <div
                 key={deck._id}
@@ -290,22 +310,47 @@ export default function DeckList() {
                     >
                       {FLAG[deck.language] || "🌐"}
                     </div>
-                    {d.level && (
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          letterSpacing: "0.05em",
-                          textTransform: "uppercase",
-                          padding: "3px 10px",
-                          borderRadius: 20,
-                          background: LEVEL_BG[d.level] || "var(--cream-2)",
-                          color: LEVEL_TEXT[d.level] || "var(--muted)",
-                        }}
-                      >
-                        {d.level}
-                      </span>
-                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {user && (
+                        <button
+                          onClick={(e) => handleToggleSave(deck._id, e)}
+                          disabled={savingId === deck._id}
+                          title={savedIds.has(deck._id) ? "Bỏ lưu" : "Lưu deck"}
+                          style={{
+                            border: "none",
+                            background: savedIds.has(deck._id) ? "rgba(0,200,150,.15)" : "var(--cream-2)",
+                            color: savedIds.has(deck._id) ? "var(--emerald)" : "var(--muted)",
+                            borderRadius: 8,
+                            width: 32,
+                            height: 32,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            fontSize: 16,
+                            transition: "all .2s",
+                          }}
+                        >
+                          {savingId === deck._id ? "…" : savedIds.has(deck._id) ? "🔖" : "➕"}
+                        </button>
+                      )}
+                      {d.level && (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: "0.05em",
+                            textTransform: "uppercase",
+                            padding: "3px 10px",
+                            borderRadius: 20,
+                            background: LEVEL_BG[d.level] || "var(--cream-2)",
+                            color: LEVEL_TEXT[d.level] || "var(--muted)",
+                          }}
+                        >
+                          {d.level}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <h3
@@ -336,7 +381,7 @@ export default function DeckList() {
                       background: "var(--cream-2)",
                       borderRadius: 2,
                       overflow: "hidden",
-                      marginBottom: 20,
+                      marginBottom: 6,
                     }}
                   >
                     <div
@@ -345,8 +390,15 @@ export default function DeckList() {
                         width: `${progressPct}%`,
                         transition: "width 0.6s ease",
                       }}
-                      title={`${progressPct}% hoàn thành · ${dueForDeck} từ cần ôn hôm nay`}
+                      title={isSaved ? `${progressPct}% đã học` : "Lưu deck để theo dõi tiến trình"}
                     />
+                  </div>
+                  <div style={{ fontSize: 11, color: isSaved && progressPct > 0 ? "var(--emerald)" : "var(--muted)", marginBottom: 14 }}>
+                    {isSaved
+                      ? progressPct > 0
+                        ? `📖 Đã học ${progressPct}% số thẻ`
+                        : "📖 Chưa bắt đầu học"
+                      : "➕ Lưu để theo dõi tiến trình"}
                   </div>
 
                   <div

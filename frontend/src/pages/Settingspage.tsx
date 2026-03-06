@@ -168,7 +168,6 @@ const LANGUAGES = [
 
 export default function SettingsPage() {
   const { user, login } = useAuth();
-  const token = localStorage.getItem("token") ?? "";
 
   const [settings, setSettings] = useState<Settings>({
     dailyGoal: (user as any)?.settings?.dailyGoal ?? 20,
@@ -215,10 +214,11 @@ export default function SettingsPage() {
     try {
       const res = await api.put("/auth/settings", settings);
       if (res.data?.success) {
-        // Refresh user in context
+        // Refresh user trong context: /auth/me trả về { success, user }
         const meRes = await api.get("/auth/me");
-        if (meRes.data?.success) {
-          login(token, meRes.data.data);
+        if (meRes.data?.success && meRes.data.user) {
+          const token = localStorage.getItem("token") ?? "";
+          login(token, meRes.data.user);
         }
         setDirty(false);
         showToast("Đã lưu cài đặt! ✅");

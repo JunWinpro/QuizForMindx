@@ -39,10 +39,10 @@ export default function Navbar() {
 
   const navLinks = [
     { to: "/decks",       label: "Flashcards"               },
-    { to: "/quiz",       label: "Quiz", badge: "New"  },
+    { to: "/saved-decks", label: "Đã lưu"                   },
+    { to: "/quiz",        label: "Quiz", badge: "New"        },
     { to: "/schedule",    label: "Lịch ôn tập"              },
     { to: "/progress",    label: "Tiến trình"               },
-    { to: "/leaderboard", label: "Bảng xếp hạng"            },
   ];
 
   const isActive = (to: string) => location.pathname.startsWith(to);
@@ -215,11 +215,13 @@ export default function Navbar() {
                     </div>
                     <Link to="/profile" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>👤 Hồ sơ cá nhân</Link>
                     <Link to="/my-decks" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>📚 Deck của tôi</Link>
+                    <Link to="/saved-decks" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>🔖 Deck đã lưu</Link>
                     <Link to="/schedule" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>
                       📅 Lịch ôn tập
                       {srs.dueCount > 0 && <DueCardsBadge count={srs.dueCount} size="sm" />}
                     </Link>
                     <Link to="/progress" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>📊 Tiến trình học</Link>
+                    <Link to="/settings" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>⚙️ Cài đặt</Link>
                     <button onClick={handleLogout} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "#FF6B6B", background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontWeight: 500, marginTop: 4 }}>🚪 Đăng xuất</button>
                   </div>
                 </>

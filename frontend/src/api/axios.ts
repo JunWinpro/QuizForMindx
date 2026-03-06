@@ -11,8 +11,8 @@ const api = axios.create({
 // Không gắn token vào các route auth (login/register)
 api.interceptors.request.use((config) => {
   try {
-    const isAuthRoute = config.url?.startsWith("/auth/");
-    if (!isAuthRoute) {
+    const isPublicAuthRoute = config.url === "/auth/login" || config.url === "/auth/register";
+    if (!isPublicAuthRoute) {
       const token = localStorage.getItem("token");
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
