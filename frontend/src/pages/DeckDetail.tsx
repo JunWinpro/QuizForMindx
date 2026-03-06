@@ -138,6 +138,115 @@ function Toast({ msg, type }: { msg: string; type: "success" | "error" }) {
   );
 }
 
+function CardFormFields({
+  cardForm,
+  setCardForm,
+  saving,
+  onSubmit,
+  label,
+}: {
+  cardForm: CardForm;
+  setCardForm: React.Dispatch<React.SetStateAction<CardForm>>;
+  saving: boolean;
+  onSubmit: () => void;
+  label: string;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text)",
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
+          Mặt trước (từ) *
+        </label>
+        <input
+          type="text"
+          value={cardForm.front}
+          onChange={(e) =>
+            setCardForm((f) => ({ ...f, front: e.target.value }))
+          }
+          placeholder="Ví dụ: apple"
+          className="input-field"
+          style={{ width: "100%", boxSizing: "border-box" }}
+        />
+      </div>
+      <div>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text)",
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
+          Mặt sau (nghĩa) *
+        </label>
+        <input
+          type="text"
+          value={cardForm.back}
+          onChange={(e) => setCardForm((f) => ({ ...f, back: e.target.value }))}
+          placeholder="Ví dụ: quả táo"
+          className="input-field"
+          style={{ width: "100%", boxSizing: "border-box" }}
+        />
+      </div>
+      <div>
+        <label
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text)",
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
+          Ví dụ (tuỳ chọn)
+        </label>
+        <textarea
+          value={cardForm.example}
+          onChange={(e) =>
+            setCardForm((f) => ({ ...f, example: e.target.value }))
+          }
+          placeholder="I eat an apple every day."
+          rows={2}
+          className="input-field"
+          style={{ width: "100%", boxSizing: "border-box", resize: "vertical" }}
+        />
+      </div>
+      <button
+        onClick={onSubmit}
+        disabled={saving || !cardForm.front.trim() || !cardForm.back.trim()}
+        style={{
+          padding: "13px",
+          background:
+            saving || !cardForm.front.trim() || !cardForm.back.trim()
+              ? "var(--cream-2)"
+              : "var(--navy)",
+          color:
+            saving || !cardForm.front.trim() || !cardForm.back.trim()
+              ? "var(--muted)"
+              : "white",
+          border: "none",
+          borderRadius: 12,
+          fontWeight: 700,
+          fontSize: 15,
+          cursor: saving ? "not-allowed" : "pointer",
+          fontFamily: "'Outfit',sans-serif",
+        }}
+      >
+        {saving ? "Đang lưu..." : label}
+      </button>
+    </div>
+  );
+}
+
 export default function DeckDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -337,106 +446,7 @@ export default function DeckDetail() {
     setShowAddCard(false);
   };
 
-  const CardFormFields = ({
-    onSubmit,
-    label,
-  }: {
-    onSubmit: () => void;
-    label: string;
-  }) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div>
-        <label
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--text)",
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Mặt trước (từ) *
-        </label>
-        <input
-          type="text"
-          value={cardForm.front}
-          onChange={(e) =>
-            setCardForm((f) => ({ ...f, front: e.target.value }))
-          }
-          placeholder="Ví dụ: apple"
-          className="input-field"
-          style={{ width: "100%", boxSizing: "border-box" }}
-        />
-      </div>
-      <div>
-        <label
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--text)",
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Mặt sau (nghĩa) *
-        </label>
-        <input
-          type="text"
-          value={cardForm.back}
-          onChange={(e) => setCardForm((f) => ({ ...f, back: e.target.value }))}
-          placeholder="Ví dụ: quả táo"
-          className="input-field"
-          style={{ width: "100%", boxSizing: "border-box" }}
-        />
-      </div>
-      <div>
-        <label
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--text)",
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Ví dụ (tuỳ chọn)
-        </label>
-        <textarea
-          value={cardForm.example}
-          onChange={(e) =>
-            setCardForm((f) => ({ ...f, example: e.target.value }))
-          }
-          placeholder="I eat an apple every day."
-          rows={2}
-          className="input-field"
-          style={{ width: "100%", boxSizing: "border-box", resize: "vertical" }}
-        />
-      </div>
-      <button
-        onClick={onSubmit}
-        disabled={saving || !cardForm.front.trim() || !cardForm.back.trim()}
-        style={{
-          padding: "13px",
-          background:
-            saving || !cardForm.front.trim() || !cardForm.back.trim()
-              ? "var(--cream-2)"
-              : "var(--navy)",
-          color:
-            saving || !cardForm.front.trim() || !cardForm.back.trim()
-              ? "var(--muted)"
-              : "white",
-          border: "none",
-          borderRadius: 12,
-          fontWeight: 700,
-          fontSize: 15,
-          cursor: saving ? "not-allowed" : "pointer",
-          fontFamily: "'Outfit',sans-serif",
-        }}
-      >
-        {saving ? "Đang lưu..." : label}
-      </button>
-    </div>
-  );
+
 
   /* ── Study Mode ── */
   if (studyMode) {
@@ -1463,7 +1473,7 @@ export default function DeckDetail() {
             setCardForm(emptyCardForm);
           }}
         >
-          <CardFormFields onSubmit={handleAddCard} label="Thêm thẻ" />
+          <CardFormFields cardForm={cardForm} setCardForm={setCardForm} saving={saving} onSubmit={handleAddCard} label="Thêm thẻ" />
         </Modal>
       )}
 
@@ -1476,7 +1486,7 @@ export default function DeckDetail() {
             setCardForm(emptyCardForm);
           }}
         >
-          <CardFormFields onSubmit={handleUpdateCard} label="Lưu thay đổi" />
+          <CardFormFields cardForm={cardForm} setCardForm={setCardForm} saving={saving} onSubmit={handleUpdateCard} label="Lưu thay đổi" />
         </Modal>
       )}
 
