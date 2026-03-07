@@ -1,7 +1,12 @@
+require("dotenv").config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
+
+// Load passport strategy (dotenv already loaded above)
+require('./config/passport'); // khởi tạo strategy
+const passport = require('passport');
 
 // ===== NEW IMPORTS =====
 const { applySecurityMiddleware, authLimiter } = require('./middlewares/security');
@@ -29,6 +34,9 @@ applySecurityMiddleware(app);
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Passport initialization MUST happen after `app` is created and body-parsers applied
+app.use(passport.initialize());
+
 // ─── Routes ─────────────────────────────────────────────────────────────────
 // ===== NEW: Health check route (riêng, không bị rate-limit) =====
 app.use('/api', healthRouter);
@@ -46,13 +54,6 @@ app.use('/api/quiz',  quizRoutes);
 app.use('/api/stats',       statsRoutes);
 app.use('/api/saved-decks', savedDeckRoutes);
 
-// ─── Health check cũ (có thể xóa hoặc giữ lại) ───────────────────────────────
-// Nếu giữ lại, nó sẽ trùng với /api/health mới
-// Khuyến nghị: XÓA phần này vì đã có healthRouter
-// app.get('/api/health', (req, res) => {
-//   res.status(200).json({ success: true, message: 'LexiLearn API is running' });
-// });
-
 // ─── 404 handler ────────────────────────────────────────────────────────────
 // ===== THAY THẾ bằng notFound middleware =====
 app.use(notFound);
@@ -62,5 +63,6 @@ app.use(notFound);
 // ===== THAY THẾ bằng errorHandler middleware =====
 app.use(errorHandler);
 // =================================================
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
 
 module.exports = app;

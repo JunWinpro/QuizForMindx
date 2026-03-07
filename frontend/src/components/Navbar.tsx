@@ -5,6 +5,40 @@ import { useSRS } from "../hooks/UseSRS";
 import DueCardsBadge from "./DueCardsBadge";
 import { useNotification, notifyDueCards } from "../utils/useNotification";
 
+/* ── Avatar component: photo > initials ─────────────────── */
+function NavAvatar({ user, size = 28 }: { user: any; size?: number }) {
+  const [imgErr, setImgErr] = useState(false);
+  const initials = user?.displayName
+    ? user.displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
+    : "?";
+
+  if (user?.photoUrl && !imgErr) {
+    return (
+      <img
+        src={user.photoUrl}
+        alt={user.displayName}
+        onError={() => setImgErr(true)}
+        style={{
+          width: size, height: size, borderRadius: "50%",
+          objectFit: "cover", flexShrink: 0,
+          border: "1.5px solid rgba(0,200,150,.4)",
+        }}
+      />
+    );
+  }
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: "linear-gradient(135deg,#00c896,#00a87f)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.42, fontWeight: 700, color: "var(--navy)",
+      fontFamily: "'Fraunces',serif", flexShrink: 0,
+    }}>
+      {initials}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen]         = useState(false);
   const [searchOpen, setSearchOpen]     = useState(false);
@@ -14,18 +48,13 @@ export default function Navbar() {
   const navigate  = useNavigate();
   const { user, logout } = useAuth();
 
-  // ── SRS: global due count (tất cả deck của user) ──────────────────────
   const srs = useSRS();
   useEffect(() => {
-    if (user) {
-      srs.loadDueCards(); // không truyền deckId → lấy tất cả
-    }
+    if (user) srs.loadDueCards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email]);
 
-  // ── Notification API ──────────────────────────────────────────────────
   const notification = useNotification();
-  // Gửi browser notification 1 lần khi đã có quyền + có due cards
   useEffect(() => {
     if (
       notification.permission === "granted" &&
@@ -54,10 +83,6 @@ export default function Navbar() {
     navigate("/");
   };
 
-  const initials = user?.displayName
-    ? user.displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
-    : "?";
-
   return (
     <header style={{ background: "var(--navy)", position: "sticky", top: 0, zIndex: 40, boxShadow: "0 1px 0 rgba(255,255,255,.06)" }}>
       <nav style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -74,7 +99,6 @@ export default function Navbar() {
             <Link key={link.to} to={link.to} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 13px", borderRadius: 10, fontSize: 14, fontWeight: 500, textDecoration: "none", color: isActive(link.to) ? "var(--emerald)" : "rgba(255,255,255,.72)", background: isActive(link.to) ? "rgba(0,200,150,.12)" : "transparent", transition: "all .2s" }}>
               {link.label}
               {link.badge && <span style={{ background: "var(--emerald)", color: "var(--navy)", fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 20 }}>{link.badge}</span>}
-              {/* Due badge on "Lịch ôn tập" */}
               {link.to === "/schedule" && user && srs.dueCount > 0 && (
                 <DueCardsBadge count={srs.dueCount} size="sm" />
               )}
@@ -84,49 +108,30 @@ export default function Navbar() {
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
 
-          {/* 🔔 Notification bell – chỉ show khi đăng nhập */}
+          {/* 🔔 Notification bell */}
           {user && (
             <div style={{ position: "relative" }}>
               <button
                 onClick={() => { setNotifOpen(o => !o); setSearchOpen(false); setDropdownOpen(false); }}
                 aria-label="Thông báo"
-                style={{
-                  background: notifOpen ? "rgba(0,200,150,.15)" : "rgba(255,255,255,.08)",
-                  border: "none", borderRadius: 10, width: 38, height: 38,
-                  cursor: "pointer", color: "white", fontSize: 16,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  position: "relative", transition: "all .2s", flexShrink: 0,
-                }}
+                style={{ background: notifOpen ? "rgba(0,200,150,.15)" : "rgba(255,255,255,.08)", border: "none", borderRadius: 10, width: 38, height: 38, cursor: "pointer", color: "white", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", transition: "all .2s", flexShrink: 0 }}
               >
                 🔔
                 {srs.dueCount > 0 && (
-                  <span style={{
-                    position: "absolute", top: 4, right: 4,
-                    width: 8, height: 8, borderRadius: "50%",
-                    background: "#FF6B6B", border: "2px solid var(--navy)",
-                  }} />
+                  <span style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, borderRadius: "50%", background: "#FF6B6B", border: "2px solid var(--navy)" }} />
                 )}
               </button>
 
-              {/* Notification dropdown */}
               {notifOpen && (
                 <>
                   <div onClick={() => setNotifOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
-                  <div style={{
-                    position: "absolute", right: 0, top: "calc(100% + 8px)",
-                    background: "var(--navy-2)", border: "1px solid rgba(255,255,255,.1)",
-                    borderRadius: 14, padding: 4, minWidth: 280, zIndex: 20,
-                    boxShadow: "0 8px 32px rgba(0,0,0,.4)",
-                  }}>
-                    {/* Header */}
+                  <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "var(--navy-2)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 14, padding: 4, minWidth: 280, zIndex: 20, boxShadow: "0 8px 32px rgba(0,0,0,.4)" }}>
                     <div style={{ padding: "12px 14px 10px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "white", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <span>📅 Nhắc ôn tập</span>
                         {srs.dueCount > 0 && <DueCardsBadge count={srs.dueCount} size="sm" />}
                       </div>
                     </div>
-
-                    {/* Content */}
                     <div style={{ padding: "10px 4px" }}>
                       {srs.dueLoading ? (
                         <div style={{ padding: "12px 14px", color: "rgba(255,255,255,.5)", fontSize: 13 }}>Đang tải…</div>
@@ -140,7 +145,6 @@ export default function Navbar() {
                           <div style={{ padding: "8px 14px 6px", fontSize: 12, color: "rgba(255,255,255,.55)" }}>
                             Bạn có <span style={{ color: "#FF6B6B", fontWeight: 700 }}>{srs.dueCount} từ</span> cần ôn hôm nay
                           </div>
-                          {/* Show up to 5 due cards */}
                           {srs.dueCards.slice(0, 5).map(card => (
                             <div key={card._id} style={{ padding: "8px 14px", display: "flex", justifyContent: "space-between", gap: 8 }}>
                               <span style={{ fontSize: 13, fontWeight: 600, color: "white" }}>{card.front}</span>
@@ -148,33 +152,18 @@ export default function Navbar() {
                             </div>
                           ))}
                           {srs.dueCount > 5 && (
-                            <div style={{ padding: "4px 14px 6px", fontSize: 12, color: "rgba(255,255,255,.4)" }}>
-                              … và {srs.dueCount - 5} từ nữa
-                            </div>
+                            <div style={{ padding: "4px 14px 6px", fontSize: 12, color: "rgba(255,255,255,.4)" }}>… và {srs.dueCount - 5} từ nữa</div>
                           )}
                         </>
                       )}
                     </div>
-
-                    {/* Actions */}
                     <div style={{ borderTop: "1px solid rgba(255,255,255,.08)", padding: "8px 4px 4px", display: "flex", gap: 6, flexDirection: "column" }}>
-                      <Link to="/schedule" onClick={() => setNotifOpen(false)}
-                        style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>
-                        📅 Xem lịch ôn tập
-                      </Link>
-                      {/* Notification permission request */}
+                      <Link to="/schedule" onClick={() => setNotifOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>📅 Xem lịch ôn tập</Link>
                       {notification.isSupported && notification.permission === "default" && (
-                        <button
-                          onClick={() => notification.requestPermission()}
-                          style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "var(--emerald)", background: "rgba(0,200,150,.1)", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}
-                        >
-                          🔔 Bật thông báo nhắc ôn
-                        </button>
+                        <button onClick={() => notification.requestPermission()} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "var(--emerald)", background: "rgba(0,200,150,.1)", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>🔔 Bật thông báo nhắc ôn</button>
                       )}
                       {notification.permission === "granted" && (
-                        <div style={{ padding: "6px 12px", fontSize: 12, color: "rgba(255,255,255,.4)" }}>
-                          ✅ Thông báo đã bật
-                        </div>
+                        <div style={{ padding: "6px 12px", fontSize: 12, color: "rgba(255,255,255,.4)" }}>✅ Thông báo đã bật</div>
                       )}
                     </div>
                   </div>
@@ -193,12 +182,11 @@ export default function Navbar() {
           {user ? (
             <div style={{ position: "relative" }} className="nav-desktop-auth">
               <button
-                onClick={() => setDropdownOpen(o => !o)}
+                onClick={() => { setDropdownOpen(o => !o); setNotifOpen(false); setSearchOpen(false); }}
                 style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,.08)", border: "1.5px solid rgba(255,255,255,.15)", borderRadius: 10, padding: "5px 12px 5px 6px", cursor: "pointer", transition: "all .2s" }}
               >
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--emerald)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--navy)", flexShrink: 0 }}>
-                  {initials}
-                </div>
+                {/* ← Avatar with Google photo support */}
+                <NavAvatar user={user} size={28} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: "white", maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {user.displayName}
                 </span>
@@ -208,21 +196,45 @@ export default function Navbar() {
               {dropdownOpen && (
                 <>
                   <div onClick={() => setDropdownOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
-                  <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "var(--navy-2)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12, padding: "8px", minWidth: 180, zIndex: 20, boxShadow: "0 8px 32px rgba(0,0,0,.4)" }}>
-                    <div style={{ padding: "8px 12px 12px", borderBottom: "1px solid rgba(255,255,255,.08)", marginBottom: 6 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{user.displayName}</div>
-                      <div style={{ fontSize: 12, color: "rgba(255,255,255,.45)", marginTop: 2 }}>{user.email}</div>
+                  <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "var(--navy-2)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 16, padding: "8px", minWidth: 220, zIndex: 20, boxShadow: "0 8px 32px rgba(0,0,0,.4)" }}>
+
+                    {/* Profile header with photo */}
+                    <div style={{ padding: "12px 14px 14px", borderBottom: "1px solid rgba(255,255,255,.08)", marginBottom: 6, display: "flex", gap: 12, alignItems: "center" }}>
+                      <NavAvatar user={user} size={40} />
+                      <div style={{ overflow: "hidden" }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.displayName}</div>
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.email}</div>
+                        {user.googleId && (
+                          <div style={{ fontSize: 11, color: "#7eb3ff", marginTop: 2, fontWeight: 600 }}>via Google</div>
+                        )}
+                      </div>
                     </div>
-                    <Link to="/profile" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>👤 Hồ sơ cá nhân</Link>
-                    <Link to="/my-decks" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>📚 Deck của tôi</Link>
-                    <Link to="/saved-decks" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>🔖 Deck đã lưu</Link>
+
+                    <Link to="/profile" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>
+                      <span>👤</span> Hồ sơ cá nhân
+                    </Link>
+                    <Link to="/my-decks" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>
+                      <span>📚</span> Deck của tôi
+                    </Link>
+                    <Link to="/saved-decks" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>
+                      <span>🔖</span> Deck đã lưu
+                    </Link>
                     <Link to="/schedule" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>
-                      📅 Lịch ôn tập
+                      <span style={{ display: "flex", gap: 10 }}><span>📅</span> Lịch ôn tập</span>
                       {srs.dueCount > 0 && <DueCardsBadge count={srs.dueCount} size="sm" />}
                     </Link>
-                    <Link to="/progress" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>📊 Tiến trình học</Link>
-                    <Link to="/settings" onClick={() => setDropdownOpen(false)} style={{ display: "block", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>⚙️ Cài đặt</Link>
-                    <button onClick={handleLogout} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "#FF6B6B", background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontWeight: 500, marginTop: 4 }}>🚪 Đăng xuất</button>
+                    <Link to="/progress" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>
+                      <span>📊</span> Tiến trình học
+                    </Link>
+                    <Link to="/settings" onClick={() => setDropdownOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "rgba(255,255,255,.8)", textDecoration: "none", fontWeight: 500 }}>
+                      <span>⚙️</span> Cài đặt
+                    </Link>
+
+                    <div style={{ borderTop: "1px solid rgba(255,255,255,.08)", marginTop: 4, paddingTop: 4 }}>
+                      <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "#FF6B6B", background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit',sans-serif", fontWeight: 500 }}>
+                        <span>🚪</span> Đăng xuất
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -257,10 +269,11 @@ export default function Navbar() {
         <div style={{ background: "var(--navy-2)", borderTop: "1px solid rgba(255,255,255,.07)", padding: "8px 20px 20px" }}>
           {user && (
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px 14px", borderBottom: "1px solid rgba(255,255,255,.08)", marginBottom: 4 }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--emerald)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "var(--navy)", flexShrink: 0 }}>{initials}</div>
-              <div>
+              <NavAvatar user={user} size={40} />
+              <div style={{ overflow: "hidden" }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "white" }}>{user.displayName}</div>
                 <div style={{ fontSize: 12, color: "rgba(255,255,255,.45)" }}>{user.email}</div>
+                {user.googleId && <div style={{ fontSize: 11, color: "#7eb3ff", fontWeight: 600 }}>via Google</div>}
               </div>
               {srs.dueCount > 0 && <DueCardsBadge count={srs.dueCount} />}
             </div>
@@ -279,12 +292,18 @@ export default function Navbar() {
           ))}
 
           {user ? (
-            <button onClick={handleLogout} style={{ width: "100%", marginTop: 16, padding: "11px", background: "rgba(255,107,107,.15)", border: "1.5px solid rgba(255,107,107,.3)", borderRadius: 10, color: "#FF6B6B", fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-              🚪 Đăng xuất
-            </button>
+            <>
+              <Link to="/profile" onClick={() => setMenuOpen(false)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 4px", color: "rgba(255,255,255,.85)", textDecoration: "none", fontSize: 15, fontWeight: 500, borderBottom: "1px solid rgba(255,255,255,.06)" }}>
+                👤 Hồ sơ cá nhân <span style={{ color: "rgba(255,255,255,.3)", fontSize: 14 }}>→</span>
+              </Link>
+              <button onClick={handleLogout} style={{ width: "100%", marginTop: 16, padding: "11px", background: "rgba(255,107,107,.15)", border: "1.5px solid rgba(255,107,107,.3)", borderRadius: 10, color: "#FF6B6B", fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                🚪 Đăng xuất
+              </button>
+            </>
           ) : (
             <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-              <Link to="/login"    onClick={() => setMenuOpen(false)} style={{ flex: 1, textAlign: "center", padding: "11px", border: "1.5px solid rgba(255,255,255,.25)", borderRadius: 10, color: "white", textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Đăng nhập</Link>
+              <Link to="/login" onClick={() => setMenuOpen(false)} style={{ flex: 1, textAlign: "center", padding: "11px", border: "1.5px solid rgba(255,255,255,.25)", borderRadius: 10, color: "white", textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Đăng nhập</Link>
               <Link to="/register" onClick={() => setMenuOpen(false)} style={{ flex: 1, textAlign: "center", padding: "11px", background: "var(--emerald)", borderRadius: 10, color: "var(--navy)", textDecoration: "none", fontSize: 14, fontWeight: 700 }}>Đăng ký</Link>
             </div>
           )}

@@ -9,9 +9,17 @@ const UserSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    // Optional — Google OAuth users không có passwordHash
     passwordHash: {
       type: String,
-      required: true,
+      default: null,
+    },
+    // Google OAuth
+    googleId: {
+      type: String,
+      default: null,
+      sparse: true,  // allow multiple nulls, unique when set
+      index: true,
     },
     displayName: {
       type: String,
@@ -44,7 +52,5 @@ const UserSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-
 
 module.exports = mongoose.model('User', UserSchema);
