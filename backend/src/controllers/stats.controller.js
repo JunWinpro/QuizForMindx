@@ -3,11 +3,7 @@ const User = require('../models/User');
 const SrsData = require('../models/Srsdata');
 const QuizResult = require('../models/Quizresult');
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/stats/progress
-// Aggregate tổng hợp: totalWordsLearned, averageAccuracy, totalQuizzes,
-// currentStreak, longestStreak — chạy song song để tối ưu
-// ─────────────────────────────────────────────────────────────────────────────
+
 const getProgress = async (req, res) => {
   try {
     const userId = req.user.userId;
