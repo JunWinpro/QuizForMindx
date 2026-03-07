@@ -4,6 +4,7 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import type { Card } from "../types/card";
 import { playGoogleTTS } from "../utils/tts";
+import { saveCardsToCache, getCachedCards } from "../utils/indexedDB";
 
 interface DeckInfo {
   _id: string;
@@ -362,21 +363,56 @@ export default function DeckDetail() {
     if (!id) return;
     let mounted = true;
     setLoading(true);
+
+    // ── Đọc cache ngay lập tức (hoạt động offline) ─────────────────────
+    const cachedMeta = sessionStorage.getItem(`deck_meta_${id}`);
+    if (cachedMeta) {
+      try {
+        const parsed = JSON.parse(cachedMeta);
+        if (mounted) setDeck(parsed);
+      } catch {}
+    }
+
+    getCachedCards(id).then((cachedCards) => {
+      if (cachedCards && cachedCards.length > 0 && mounted) {
+        setCards(cachedCards);
+      }
+      // Nếu offline: dừng loading sau khi đọc cache xong
+      if (!navigator.onLine && mounted) {
+        setLoading(false);
+      }
+    });
+
+    // ── Nếu offline: không gọi API, dừng ở đây ─────────────────────────
+    if (!navigator.onLine) {
+      setTimeout(() => { if (mounted) setLoading(false); }, 400);
+      return () => { mounted = false; };
+    }
+
+    // ── Online: gọi API và cập nhật cache ──────────────────────────────
     Promise.all([
       api.get(`/decks/${id}`).catch(() => null),
       api.get(`/decks/${id}/cards`).catch(() => null),
     ])
       .then(([deckRes, cardsRes]) => {
         if (!mounted) return;
-        if (deckRes?.data?.success) setDeck(deckRes.data.data);
-        if (cardsRes?.data?.success) setCards(cardsRes.data.data || []);
+        if (deckRes?.data?.success) {
+          setDeck(deckRes.data.data);
+          sessionStorage.setItem(`deck_meta_${id}`, JSON.stringify(deckRes.data.data));
+        }
+        if (cardsRes?.data?.success) {
+          const loadedCards = cardsRes.data.data || [];
+          setCards(loadedCards);
+          if (id && loadedCards.length > 0) {
+            saveCardsToCache(id, loadedCards).catch(() => {});
+          }
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
       });
-    return () => {
-      mounted = false;
-    };
+
+    return () => { mounted = false; };
   }, [id]);
 
   // Card CRUD handlers

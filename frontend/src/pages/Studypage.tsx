@@ -307,15 +307,27 @@ export default function StudyPage() {
     overrideCards: studyMode === "due" ? (srs.dueCards as any) : undefined,
   });
 
-  // ── Load deck meta ────────────────────────────────────────────────────
+  // ── Load deck meta (with localStorage cache for offline) ─────────────
   useEffect(() => {
     if (!deckId) return;
+
+    // Thử load từ cache trước (dùng khi offline)
+    const cacheKey = `deck_meta_${deckId}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try { setDeckMeta(JSON.parse(cached)); } catch {}
+    }
+
     api
       .get(`/decks/${deckId}`)
       .then((res) => {
-        if (res.data?.success) setDeckMeta(res.data.data);
+        if (res.data?.success) {
+          setDeckMeta(res.data.data);
+          // Lưu vào sessionStorage để dùng khi offline
+          sessionStorage.setItem(cacheKey, JSON.stringify(res.data.data));
+        }
       })
-      .catch(() => null);
+      .catch(() => null); // Silent — đã có cached từ sessionStorage
   }, [deckId]);
 
   // ── Submit SRS results khi session kết thúc (chỉ 1 lần) ──────────────
@@ -363,14 +375,23 @@ export default function StudyPage() {
 
   // ── STATE: Chưa chọn mode ─────────────────────────────────────────────
   if (studyMode === null) {
-    // Đợi meta + due count load xong mới hiện mode selector
-    if (!deckMeta || srs.dueLoading) return <Spinner label="Đang chuẩn bị…" />;
+    // Khi offline: nếu có deckMeta từ cache thì show luôn, không đợi due count
+    const isOffline = !navigator.onLine;
+
+    // Chờ meta load (nhưng nếu offline và không có cache → vẫn show với tên mặc định)
+    const metaReady = deckMeta !== null;
+    // Chờ due count chỉ khi online
+    const dueReady = isOffline || !srs.dueLoading;
+
+    if (!metaReady && !isOffline) return <Spinner label="Đang chuẩn bị…" />;
+    if (!dueReady) return <Spinner label="Đang chuẩn bị…" />;
+
     return (
       <ModeSelector
         deckMeta={deckMeta}
         deckId={deckId!}
-        dueCount={srs.dueCount}
-        dueLoading={srs.dueLoading}
+        dueCount={isOffline ? 0 : srs.dueCount}   // offline: ẩn "due mode"
+        dueLoading={isOffline ? false : srs.dueLoading}
         onSelect={setStudyMode}
       />
     );

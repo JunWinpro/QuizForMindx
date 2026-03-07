@@ -3,6 +3,12 @@ const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
 
+// ===== NEW IMPORTS =====
+const { applySecurityMiddleware, authLimiter } = require('./middlewares/security');
+const { errorHandler, notFound } = require('./middlewares/errorHandler');
+const healthRouter = require('./routes/healthRouter');
+// ======================
+
 const deckRoutes  = require('./routes/deck.routes');
 const authRoutes  = require('./routes/Auth.routes');
 const studyRoutes = require('./routes/study.routes');
@@ -15,11 +21,24 @@ const app = express();
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors());
+
+// ===== NEW: Security middleware (helmet, rate-limit, mongo-sanitize) =====
+applySecurityMiddleware(app);
+// =========================================================================
+
 app.use(express.json());
 app.use(morgan('dev'));
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
-app.use('/api/auth',  authRoutes);
+// ===== NEW: Health check route (riêng, không bị rate-limit) =====
+app.use('/api', healthRouter);
+// ================================================================
+
+// ===== NEW: Auth routes với rate limit chặt hơn =====
+app.use('/api/auth', authLimiter, authRoutes);
+// ====================================================
+
+// Các routes khác giữ nguyên
 app.use('/api/decks', deckRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/srs',   srsRoutes);
@@ -27,25 +46,21 @@ app.use('/api/quiz',  quizRoutes);
 app.use('/api/stats',       statsRoutes);
 app.use('/api/saved-decks', savedDeckRoutes);
 
-// ─── Health check ───────────────────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'LexiLearn API is running' });
-});
+// ─── Health check cũ (có thể xóa hoặc giữ lại) ───────────────────────────────
+// Nếu giữ lại, nó sẽ trùng với /api/health mới
+// Khuyến nghị: XÓA phần này vì đã có healthRouter
+// app.get('/api/health', (req, res) => {
+//   res.status(200).json({ success: true, message: 'LexiLearn API is running' });
+// });
 
 // ─── 404 handler ────────────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
+// ===== THAY THẾ bằng notFound middleware =====
+app.use(notFound);
+// =============================================
 
 // ─── Global error handler ───────────────────────────────────────────────────
-// eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal server error',
-    errors: err.errors || [],
-  });
-});
+// ===== THAY THẾ bằng errorHandler middleware =====
+app.use(errorHandler);
+// =================================================
 
 module.exports = app;

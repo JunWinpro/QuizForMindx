@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api/axios";
+import { useOfflineStudy } from "./useOfflineStudy"; // NEW
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -42,8 +43,9 @@ export interface UseStudySessionReturn {
   known: StudyCard[];
   unknown: StudyCard[];
   skipped: StudyCard[];
-  srsResults: SrsResult[];   // ← Stage 6: dùng để submit lên /api/srs/update-batch
+  srsResults: SrsResult[];
   dueCount: number;
+  isOfflineMode: boolean; // NEW: báo hiệu đang dùng cache
   flipCard: () => void;
   markKnown: () => void;
   markUnknown: () => void;
@@ -82,6 +84,11 @@ export function useStudySession(
   const [skipped, setSkipped]           = useState<StudyCard[]>([]);
   const [srsResults, setSrsResults]     = useState<SrsResult[]>([]);
   const [dueCount, setDueCount]         = useState(0);
+  const [isOfflineMode, setIsOfflineMode] = useState(false); // NEW
+
+  // ===== NEW: Offline hook =====
+  const { fetchCards, submitBatch } = useOfflineStudy();
+  // =============================
 
   // ── Reset toàn bộ session state ─────────────────────────────────────────
   const resetStudyState = useCallback(() => {
@@ -94,28 +101,35 @@ export function useStudySession(
     setSrsResults([]);
   }, []);
 
-  // ── Fetch từ API ─────────────────────────────────────────────────────────
+  // ── Fetch từ API (CẬP NHẬT để dùng offline) ───────────────────────────
   const loadFromAPI = useCallback(async () => {
     if (!deckId || !enabled) { setLoading(false); return; }
     setLoading(true);
     setError(null);
     resetStudyState();
+
     try {
-      // Init SRS records cho deck (idempotent)
-      await api.post(`/study/${deckId}/init-srs`).catch(() => null);
-      const res = await api.get(`/study/${deckId}/session`);
-      if (res.data?.success) {
-        setCards(res.data.data ?? []);
-        setDueCount(res.data.dueCount ?? 0);
+      // Dùng fetchCards từ useOfflineStudy (network-first + IndexedDB fallback)
+      const { cards: fetchedCards, fromCache } = await fetchCards(deckId);
+
+      if (fetchedCards && fetchedCards.length > 0) {
+        setCards(fetchedCards);
+        setIsOfflineMode(fromCache);
+        setDueCount(fetchedCards.filter((c: any) => c._srsDue).length);
       } else {
-        setError("Không thể tải phiên học");
+        setError("Deck này chưa có thẻ nào.");
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? "Lỗi kết nối server");
+      const isOffline = !navigator.onLine;
+      if (isOffline) {
+        setError("Bạn đang offline. Vui lòng mở trang này lúc có mạng trước để lưu cache.");
+      } else {
+        setError(err?.message ?? "Lỗi kết nối server");
+      }
     } finally {
       setLoading(false);
     }
-  }, [deckId, enabled, resetStudyState]);
+  }, [deckId, enabled, resetStudyState, fetchCards]);
 
   // ── Effect: reload khi config thay đổi ──────────────────────────────────
   useEffect(() => {
@@ -129,6 +143,7 @@ export function useStudySession(
       setDueCount(overrideCards.filter(c => c._srsDue).length);
       setLoading(false);
       resetStudyState();
+      setIsOfflineMode(false);
     } else {
       loadFromAPI();
     }
@@ -147,6 +162,7 @@ export function useStudySession(
 
   const flipCard = useCallback(() => setIsFlipped(f => !f), []);
 
+  // ===== CẬP NHẬT: markKnown/Known/Skip để dùng submitBatch khi offline =====
   const markKnown = useCallback(() => {
     const card = cards[currentIndex];
     if (!card) return;
@@ -170,6 +186,22 @@ export function useStudySession(
     setSrsResults(r => [...r, { cardId: card._id, quality: 2 }]);
     goNext(currentIndex);
   }, [cards, currentIndex, goNext]);
+
+  // ===== CẬP NHẬT: Kết thúc session, submit batch =====
+  useEffect(() => {
+    if (isFinished && srsResults.length > 0) {
+      // Submit khi session kết thúc
+      const submitResults = async () => {
+        try {
+          await submitBatch(srsResults);
+          // Nếu offline, submitBatch sẽ tự queue
+        } catch (err) {
+          console.error("Failed to submit SRS results:", err);
+        }
+      };
+      submitResults();
+    }
+  }, [isFinished, srsResults, submitBatch]);
 
   const restartSession = useCallback(() => {
     setCards(c => shuffle([...c]));
@@ -200,6 +232,7 @@ export function useStudySession(
     skipped,
     srsResults,
     dueCount,
+    isOfflineMode, // NEW
     flipCard,
     markKnown,
     markUnknown,
