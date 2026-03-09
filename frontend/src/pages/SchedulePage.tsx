@@ -56,14 +56,18 @@ export default function SchedulePage() {
     }
   }, [notification.permission, srs.dueCount, notifAsked, notification.notify]);
 
-  // Chart data: highlight hôm nay
-  const chartData = srs.schedule.map(d => ({
+  // Overdue = tổng dueCount - số card API schedule trả cho hôm nay
+  const overdueCount = Math.max(0, srs.dueCount - (srs.schedule[0]?.count ?? 0));
+
+  // Chart data: gộp overdue vào "Hôm nay" (giống Anki)
+  const chartData = srs.schedule.map((d, i) => ({
     ...d,
     label: formatDate(d.date),
     isToday: d.date === TODAY,
+    count: i === 0 ? d.count + overdueCount : d.count,
   }));
 
-  const maxCount = Math.max(...srs.schedule.map(d => d.count), 1);
+  const maxCount = Math.max(...chartData.map(d => d.count), 1);
 
   if (!user) {
     return (
@@ -147,6 +151,26 @@ export default function SchedulePage() {
           fontSize: 13, color: "#e05252",
         }}>
           ⚠️ Bạn đã chặn thông báo. Vào Settings trình duyệt để bật lại.
+        </div>
+      )}
+
+      {/* ── Overdue Warning Banner ── */}
+      {!srs.dueLoading && overdueCount > 0 && (
+        <div className="animate-fade-up" style={{
+          background: "rgba(255,107,107,.08)",
+          border: "1.5px solid rgba(255,107,107,.35)",
+          borderRadius: 14, padding: "13px 18px", marginBottom: 20,
+          display: "flex", alignItems: "center", gap: 12,
+        }}>
+          <span style={{ fontSize: 20 }}>⚠️</span>
+          <div>
+            <span style={{ fontWeight: 700, fontSize: 14, color: "#e05252" }}>
+              {overdueCount} từ đang quá hạn
+            </span>
+            <span style={{ fontSize: 13, color: "var(--muted)", marginLeft: 8 }}>
+              — những từ này đã quá ngày ôn, nên ưu tiên làm trước.
+            </span>
+          </div>
         </div>
       )}
 
