@@ -5,7 +5,7 @@ const {
   getSavedDecks,
   getDeckProgress,
 } = require('../controllers/savedDeck.controller');
-const authMiddleware = require('../middlewares/Auth.middleware');
+const authMiddleware = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 

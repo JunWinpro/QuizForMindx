@@ -5,7 +5,7 @@ const {
   getHistory,
   getResultDetail,
 } = require('../controllers/Quiz.controller');
-const authMiddleware = require('../middlewares/Auth.middleware');
+const authMiddleware = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
