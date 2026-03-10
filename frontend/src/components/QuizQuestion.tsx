@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { QuizQuestion as QuizQuestionType } from "../hooks/useQuizSession";
 
 interface QuizQuestionProps {
@@ -120,8 +120,8 @@ export default function QuizQuestion({
         {question.options.map((option, idx) => {
           const state = getOptionState(idx);
           const styles = optionStyles[state];
-          const isCorrectOption = idx === question.correctIndex;
-          const isSelectedWrong = !isTimeout && idx === selectedIndex && idx !== question.correctIndex;
+
+
 
           return (
             <button

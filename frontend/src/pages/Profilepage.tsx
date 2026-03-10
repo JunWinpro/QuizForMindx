@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
@@ -123,7 +123,7 @@ function Field({
 
 /* ─── main component ─────────────────────────────────────────────── */
 export default function ProfilePage() {
-  const { user, login, logout, refreshUser } = useAuth();
+  const { user, login, logout} = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<"profile" | "security">("profile");

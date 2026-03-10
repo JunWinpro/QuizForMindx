@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useQuizSession } from "../hooks/useQuizSession";
 import QuizQuestion from "../components/QuizQuestion";
@@ -141,9 +141,8 @@ export default function QuizPlayPage() {
   if (!currentQuestion) return null;
 
   // Progress %
-  const progressPct = totalCount > 0
-    ? Math.round((currentIndex / totalCount) * 100)
-    : 0;
+
+
 
   const answeredCount = currentIndex + (quiz.isAnswered ? 1 : 0);
 

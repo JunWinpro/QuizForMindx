@@ -205,7 +205,7 @@ export function useQuizSession({
     const score = qs.length > 0 ? Math.round((correct / qs.length) * 100) : 0;
 
     const wrongCards = qs
-      .filter((q, i) => !answers[i]?.isCorrect)
+      .filter((_, i) => !answers[i]?.isCorrect)
       .map((q, i) => ({
         cardId: q.cardId,
         front: q.question,
