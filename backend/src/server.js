@@ -1,12 +1,4 @@
-require('dotenv').config();
-
-const app = require('./app');
-const connectDB = require('./config/db');
-const logger = require('./utils/logger');
-
-const PORT = process.env.PORT || 5000;
-
-// Bắt lỗi không được handle — quan trọng để Render hiện lỗi thật
+// ✅ Error handlers PHẢI đăng ký TRƯỚC KHI require bất cứ thứ gì
 process.on('uncaughtException', (err) => {
   console.error('❌ UNCAUGHT EXCEPTION:', err.message);
   console.error(err.stack);
@@ -14,10 +6,34 @@ process.on('uncaughtException', (err) => {
 });
 
 process.on('unhandledRejection', (err) => {
-  console.error('❌ UNHANDLED REJECTION:', err.message);
-  console.error(err.stack);
+  console.error('❌ UNHANDLED REJECTION:', err?.message || err);
+  console.error(err?.stack);
   process.exit(1);
 });
+
+require('dotenv').config();
+
+console.log('📦 Loading modules...');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+console.log('GOOGLE_CLIENT_ID exists:', !!process.env.GOOGLE_CLIENT_ID);
+
+let app, connectDB, logger;
+
+try {
+  app = require('./app');
+  console.log('✅ app.js loaded');
+  connectDB = require('./config/db');
+  console.log('✅ db.js loaded');
+  logger = require('./utils/logger');
+  console.log('✅ logger.js loaded');
+} catch (err) {
+  console.error('❌ Failed to load module:', err.message);
+  console.error(err.stack);
+  process.exit(1);
+}
+
+const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
@@ -27,12 +43,10 @@ const startServer = async () => {
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      logger.info(`🚀 Server running on port ${PORT}`);
     });
   } catch (error) {
     console.error('❌ Server failed to start:', error.message);
     console.error(error.stack);
-    logger.error('❌ Server failed to start', { error: error.message, stack: error.stack });
     process.exit(1);
   }
 };
