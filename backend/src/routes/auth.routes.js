@@ -9,7 +9,7 @@ const {
   updateSettings,
   changePassword,
   googleCallback,
-} = require('../controllers/Auth.controller');
+} = require('../controllers/auth.controller');
 
 const router = express.Router();
 
