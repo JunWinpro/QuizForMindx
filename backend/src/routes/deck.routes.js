@@ -16,7 +16,7 @@ const {
   deleteCard
 } = require('../controllers/card.controller');
 
-const authMiddleware = require('../middlewares/Auth.middleware');
+const authMiddleware = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
