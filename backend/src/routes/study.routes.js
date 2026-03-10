@@ -1,5 +1,5 @@
 const express = require('express');
-const { initSrs, getStudySession } = require('../controllers/Study.controller');
+const { initSrs, getStudySession } = require('../controllers/study.controller');
 const authMiddleware = require('../middlewares/auth.middleware');
 
 const router = express.Router();
