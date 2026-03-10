@@ -15,7 +15,7 @@ const healthRouter = require('./routes/healthRouter');
 // ======================
 
 const deckRoutes  = require('./routes/deck.routes');
-const authRoutes  = require('./routes/Auth.routes');
+const authRoutes  = require('./routes/auth.routes');
 const studyRoutes = require('./routes/study.routes');
 const srsRoutes   = require('./routes/srs.routes');
 const quizRoutes  = require('./routes/Quiz.routes');
