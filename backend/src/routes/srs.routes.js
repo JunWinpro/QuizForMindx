@@ -1,6 +1,6 @@
 const express = require('express');
 const { updateBatch, getDueCards, getSchedule } = require('../controllers/srs.controller');
-const authMiddleware = require('../middlewares/Auth.middleware');
+const authMiddleware = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
