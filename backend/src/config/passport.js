@@ -44,7 +44,7 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         // Nếu bạn có BACKEND_URL env, tốt hơn dùng absolute callbackURL
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || '/api/auth/google/callback',
+        callbackURL: process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback',
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {
