@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { loginApi, registerApi } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 const GoogleLogin = () => {
-  window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+  window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
 };
 interface AuthPageProps {
   type: "login" | "register";

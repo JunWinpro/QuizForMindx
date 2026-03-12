@@ -1,4 +1,3 @@
-import React from "react";
 import type { StudyCard } from "../hooks/Usestudysession";
 
 interface FlashcardFlipProps {

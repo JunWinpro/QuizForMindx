@@ -1,5 +1,3 @@
-import React from "react";
-
 interface DueCardsBadgeProps {
   count: number;
   size?: "sm" | "md";

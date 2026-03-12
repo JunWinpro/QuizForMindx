@@ -185,7 +185,7 @@ export async function processQueue(): Promise<void> {
 
     for (const req of queue) {
       try {
-        const apiBase = (import.meta as any).env?.VITE_API_URL ?? "/api";
+        const apiBase = (import.meta as any).env?.VITE_API_BASE_URL ?? "/api";
         const url = req.endpoint.startsWith("http")
           ? req.endpoint
           : `${apiBase}${req.endpoint}`;
