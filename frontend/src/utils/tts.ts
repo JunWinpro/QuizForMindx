@@ -1,37 +1,15 @@
 /**
- * tts.ts
- * Dùng Web Speech API (SpeechSynthesis) — native, không cần proxy, không CORS.
- * Fallback sang Google Translate TTS URL trực tiếp nếu browser không hỗ trợ.
+ * tts.ts — Web Speech API, không proxy, không CORS
  */
 
 const LANG_MAP: Record<string, string> = {
-  vi: "vi-VN",
-  en: "en-US",
-  ja: "ja-JP",
-  fr: "fr-FR",
-  de: "de-DE",
-  ko: "ko-KR",
-  zh: "zh-CN",
-};
-
-const GOOGLE_LANG_MAP: Record<string, string> = {
-  vi: "vi",
-  en: "en",
-  ja: "ja",
-  fr: "fr",
-  de: "de",
-  ko: "ko",
-  zh: "zh-CN",
+  vi: "vi-VN", en: "en-US", ja: "ja-JP",
+  fr: "fr-FR", de: "de-DE", ko: "ko-KR", zh: "zh-CN",
 };
 
 function normalizeLang(lang: string): string {
   const code = (lang || "en").toLowerCase().split("-")[0];
   return LANG_MAP[code] ?? "en-US";
-}
-
-function normalizeToTL(lang: string): string {
-  const code = (lang || "en").toLowerCase().split("-")[0];
-  return GOOGLE_LANG_MAP[code] ?? "en";
 }
 
 let currentAudio: HTMLAudioElement | null = null;
@@ -47,61 +25,65 @@ export function stopTTS(): void {
   }
 }
 
-export function playGoogleTTS(text: string, lang: string, speed = 0.9): void {
+/** Lấy danh sách voices — async vì lần đầu có thể chưa load */
+function getVoices(): Promise<SpeechSynthesisVoice[]> {
+  return new Promise((resolve) => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      resolve(voices);
+      return;
+    }
+    // Chờ voices load xong
+    const handler = () => {
+      resolve(window.speechSynthesis.getVoices());
+      window.speechSynthesis.removeEventListener("voiceschanged", handler);
+    };
+    window.speechSynthesis.addEventListener("voiceschanged", handler);
+    // Timeout 1s nếu event không bao giờ fire
+    setTimeout(() => {
+      window.speechSynthesis.removeEventListener("voiceschanged", handler);
+      resolve(window.speechSynthesis.getVoices());
+    }, 1000);
+  });
+}
+
+export async function playGoogleTTS(text: string, lang: string, speed = 0.9): Promise<void> {
   if (!text?.trim()) return;
 
   stopTTS();
 
-  if (typeof window !== "undefined" && window.speechSynthesis) {
-    const bcp47 = normalizeLang(lang);
-    console.log(`[TTS] SpeechSynthesis text="${text}" lang="${bcp47}"`);
-
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = bcp47;
-    utter.rate = speed;
-    utter.pitch = 1;
-
-    const voices = window.speechSynthesis.getVoices();
-    const match = voices.find((v) => v.lang.startsWith(bcp47.split("-")[0]));
-    if (match) utter.voice = match;
-
-    utter.onerror = (e) => {
-      console.warn("[TTS] SpeechSynthesis lỗi:", e.error);
-      playDirectGoogleTTS(text, lang, speed);
-    };
-
-    window.speechSynthesis.speak(utter);
+  if (typeof window === "undefined" || !window.speechSynthesis) {
+    console.warn("[TTS] SpeechSynthesis không được hỗ trợ");
     return;
   }
 
-  playDirectGoogleTTS(text, lang, speed);
-}
+  const bcp47 = normalizeLang(lang);
+  console.log(`[TTS] Speaking text="${text}" lang="${bcp47}"`);
 
-function playDirectGoogleTTS(text: string, lang: string, speed: number): void {
-  const tl = normalizeToTL(lang);
-  console.log(`[TTS] Google Direct text="${text}" tl="${tl}"`);
+  const voices = await getVoices();
+  const langPrefix = bcp47.split("-")[0];
 
-  const url =
-    `https://translate.googleapis.com/translate_tts` +
-    `?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${tl}&client=gtx&ttsspeed=${speed}`;
+  // Ưu tiên voice khớp chính xác (vd: vi-VN), sau đó khớp prefix (vi)
+  const voice =
+    voices.find((v) => v.lang === bcp47) ??
+    voices.find((v) => v.lang.startsWith(langPrefix)) ??
+    null;
 
-  const audio = new Audio(url);
-  audio.crossOrigin = "anonymous";
-  currentAudio = audio;
+  if (!voice) {
+    console.warn(`[TTS] Không tìm thấy voice cho "${bcp47}". Voices có sẵn:`, voices.map(v => v.lang));
+  }
 
-  audio.onended = () => { currentAudio = null; };
-  audio.onerror = () => {
-    console.warn("[TTS] Google Direct TTS thất bại");
-    currentAudio = null;
-    if (window.speechSynthesis) {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = normalizeLang(lang);
-      window.speechSynthesis.speak(utter);
-    }
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang  = bcp47;
+  utter.rate  = speed;
+  utter.pitch = 1;
+  if (voice) utter.voice = voice;
+
+  utter.onerror = (e) => {
+    // "interrupted" là do chính stopTTS() gây ra — bỏ qua, không phải lỗi thật
+    if (e.error === "interrupted" || e.error === "canceled") return;
+    console.warn("[TTS] Lỗi:", e.error);
   };
 
-  audio.play().catch((err) => {
-    console.warn("[TTS] Audio play() thất bại:", err);
-    currentAudio = null;
-  });
+  window.speechSynthesis.speak(utter);
 }
