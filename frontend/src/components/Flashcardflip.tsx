@@ -123,7 +123,8 @@ export default function FlashcardFlip({ card, isFlipped, language = "en", onFlip
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-            background: "linear-gradient(145deg, var(--navy), var(--navy-2, #0d2137))",
+            // background: "linear-gradient(145deg, var(--navy), var(--navy-2, #0d2137))",
+            background:"#1e293b",
             borderRadius: 28,
             boxShadow: "0 20px 60px rgba(13,27,42,.20), 0 4px 16px rgba(13,27,42,.10)",
             display: "flex",
@@ -148,8 +149,8 @@ export default function FlashcardFlip({ card, isFlipped, language = "en", onFlip
           <div style={{
             fontFamily: "'Fraunces', serif",
             fontSize: "clamp(22px, 4vw, 34px)",
-            fontWeight: 700,
-            color: "white",
+            fontWeight: 800,
+            color: "#fbbf24  !important" ,
             textAlign: "center",
             lineHeight: 1.3,
           }}>
