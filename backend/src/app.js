@@ -36,7 +36,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"]
 }));
 
-app.options("*", cors());
+app.options("/*", cors());
 
 // ===== NEW: Security middleware (helmet, rate-limit, mongo-sanitize) =====
 applySecurityMiddleware(app);
