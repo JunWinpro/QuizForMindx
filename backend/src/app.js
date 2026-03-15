@@ -7,7 +7,7 @@ require('dotenv').config();
 // Load passport strategy (dotenv already loaded above)
 require('./config/passport'); // khởi tạo strategy
 const passport = require('passport');
-
+const audioRoutes = require('./routes/audio.routes');
 // ===== NEW IMPORTS =====
 const { applySecurityMiddleware, authLimiter } = require('./middlewares/security');
 const { errorHandler, notFound } = require('./middlewares/errorHandler');
@@ -33,7 +33,8 @@ applySecurityMiddleware(app);
 
 app.use(express.json());
 app.use(morgan('dev'));
-
+app.use('/api/audio', audioRoutes);
+app.use('/audio', express.static('uploads/audio'));
 // Passport initialization MUST happen after `app` is created and body-parsers applied
 app.use(passport.initialize());
 
