@@ -25,7 +25,19 @@ const savedDeckRoutes = require('./routes/savedDeck.routes');
 const app = express();
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
-app.use(cors());
+const cors = require("cors")
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://quizformindx.web.app",
+    "https://quizformindx.firebaseapp.com"
+  ],
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
+}))
+
+app.options("*", cors())
 
 // ===== NEW: Security middleware (helmet, rate-limit, mongo-sanitize) =====
 applySecurityMiddleware(app);
