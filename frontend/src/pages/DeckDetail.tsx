@@ -1,10 +1,12 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import type { Card } from "../types/card";
 import { playGoogleTTS } from "../utils/tts";
 import { saveCardsToCache, getCachedCards } from "../utils/indexedDB";
+import AudioUploader from "../components/AudioUploader";
+
 
 interface DeckInfo {
   _id: string;
@@ -20,8 +22,14 @@ interface CardForm {
   front: string;
   back: string;
   example: string;
+  audioUrl: string;
 }
-const emptyCardForm: CardForm = { front: "", back: "", example: "" };
+const emptyCardForm: CardForm = {
+  front: "",
+  back: "",
+  example: "",
+  audioUrl: ""
+};
 
 interface ImportRow {
   front: string;
@@ -145,13 +153,22 @@ function CardFormFields({
   saving,
   onSubmit,
   label,
+  deckId,
 }: {
   cardForm: CardForm;
   setCardForm: React.Dispatch<React.SetStateAction<CardForm>>;
   saving: boolean;
   onSubmit: () => void;
   label: string;
+  deckId: string;
 }) {
+  const handleAudioChange = useCallback(
+    (audioUrl: string, storagePath: string) => {
+      setCardForm((f) => ({ ...f, audioUrl, _audioStoragePath: storagePath }));
+    },
+    [setCardForm]
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div>
@@ -221,6 +238,15 @@ function CardFormFields({
           style={{ width: "100%", boxSizing: "border-box", resize: "vertical" }}
         />
       </div>
+
+      {/* ── Audio Upload ───────────────────────────────────────────────── */}
+      <AudioUploader
+        deckId={deckId}
+        currentAudioUrl={cardForm.audioUrl}
+        onChange={handleAudioChange}
+        disabled={saving}
+      />
+
       <button
         onClick={onSubmit}
         disabled={saving || !cardForm.front.trim() || !cardForm.back.trim()}
@@ -420,7 +446,14 @@ export default function DeckDetail() {
     if (!cardForm.front.trim() || !cardForm.back.trim()) return;
     setSaving(true);
     try {
-      const res = await api.post(`/decks/${id}/cards`, cardForm);
+      const payload: Record<string, string> = {
+        front: cardForm.front,
+        back: cardForm.back,
+        example: cardForm.example,
+      };
+      if (cardForm.audioUrl) payload.audioUrl = cardForm.audioUrl;
+
+      const res = await api.post(`/decks/${id}/cards`, payload);
       if (res.data?.success) {
         setCards((prev) => [...prev, res.data.data]);
         if (deck) setDeck({ ...deck, cardCount: deck.cardCount + 1 });
@@ -439,8 +472,18 @@ export default function DeckDetail() {
     if (!editCard || !cardForm.front.trim() || !cardForm.back.trim()) return;
     setSaving(true);
     try {
-      const res = await api.put(`/decks/${id}/cards/${editCard._id}`, cardForm);
+      const payload: Record<string, string> = {
+        front: cardForm.front,
+        back: cardForm.back,
+        example: cardForm.example,
+        audioUrl: cardForm.audioUrl,
+      };
+
+      const res = await api.put(`/decks/${id}/cards/${editCard._id}`, payload);
       if (res.data?.success) {
+        // Nếu user thay/xoá audio cũ → xoá file cũ khỏi Firebase Storage
+
+
         setCards((prev) =>
           prev.map((c) => (c._id === editCard._id ? res.data.data : c)),
         );
@@ -460,6 +503,10 @@ export default function DeckDetail() {
     setDeleting(true);
     try {
       await api.delete(`/decks/${id}/cards/${deleteCard._id}`);
+
+      // Xoá audio khỏi Firebase Storage nếu có
+
+
       setCards((prev) => prev.filter((c) => c._id !== deleteCard._id));
       if (deck)
         setDeck({ ...deck, cardCount: Math.max(0, deck.cardCount - 1) });
@@ -473,11 +520,14 @@ export default function DeckDetail() {
   };
 
   const openEditCard = (card: Card) => {
-    setCardForm({
-      front: card.front,
-      back: card.back,
-      example: (card as any).example || "",
-    });
+const audioUrl = (card as any).audioUrl as string | undefined;
+
+setCardForm({
+  front: card.front,
+  back: card.back,
+  example: (card as any).example || "",
+  audioUrl: audioUrl || "",
+});
     setEditCard(card);
     setShowAddCard(false);
   };
@@ -1509,7 +1559,7 @@ export default function DeckDetail() {
             setCardForm(emptyCardForm);
           }}
         >
-          <CardFormFields cardForm={cardForm} setCardForm={setCardForm} saving={saving} onSubmit={handleAddCard} label="Thêm thẻ" />
+          <CardFormFields cardForm={cardForm} setCardForm={setCardForm} saving={saving} onSubmit={handleAddCard} label="Thêm thẻ" deckId={id ?? ""} />
         </Modal>
       )}
 
@@ -1522,7 +1572,7 @@ export default function DeckDetail() {
             setCardForm(emptyCardForm);
           }}
         >
-          <CardFormFields cardForm={cardForm} setCardForm={setCardForm} saving={saving} onSubmit={handleUpdateCard} label="Lưu thay đổi" />
+          <CardFormFields cardForm={cardForm} setCardForm={setCardForm} saving={saving} onSubmit={handleUpdateCard} label="Lưu thay đổi" deckId={id ?? ""} />
         </Modal>
       )}
 
