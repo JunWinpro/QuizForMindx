@@ -28,3 +28,5 @@ echo frontend/.env >> .gitignore
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*.local

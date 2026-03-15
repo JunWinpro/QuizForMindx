@@ -297,6 +297,8 @@ export default function StudyPage() {
   const [srsSubmitting, setSrsSubmitting] = useState(false);
   const [srsSubmitted, setSrsSubmitted] = useState(false);
   const prevFlipped = useRef(false);
+  // Preloaded audio cho card hiện tại
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // SRS hook – tải due count cho deck này
   const srs = useSRS(deckId);
@@ -359,16 +361,45 @@ export default function StudyPage() {
     session.restartWithUnknown();
   };
 
-  // ── Auto-play TTS khi lật sang mặt sau ───────────────────────────────
+  // ── Preload audio + auto-play khi card mới xuất hiện (mặt trước) ────
+  useEffect(() => {
+    // Dừng và giải phóng audio cũ
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+
+    const card = session.currentCard as any;
+    if (!card || studyMode === null) return;
+
+    if (card.audioUrl) {
+      // Preload audio ngay khi card load
+      const audio = new Audio(card.audioUrl);
+      audio.preload = "auto";
+      audioRef.current = audio;
+
+      // Auto-play mặt trước nếu bật
+      if (autoPlay) {
+        audio.play().catch(() => null);
+      }
+    } else if (autoPlay) {
+      // Fallback TTS mặt trước
+      playTTS(card.front, deckMeta?.frontLanguage || "en");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.currentCard]);
+
+  // ── Auto-play khi lật sang mặt sau ───────────────────────────────────
   useEffect(() => {
     if (!autoPlay) return;
     if (session.isFlipped && !prevFlipped.current && session.currentCard) {
-      const card = session.currentCard;
-      if ((card as any).audioUrl) {
-        new Audio((card as any).audioUrl).play().catch(() => null);
-      } else {
+      const card = session.currentCard as any;
+      // Nếu không có audioUrl đính kèm → TTS mặt sau
+      if (!card.audioUrl) {
         playTTS(card.back, deckMeta?.backLanguage || "vi");
       }
+      // Nếu có audioUrl, audio đã được preload và phát ở mặt trước rồi
     }
     prevFlipped.current = session.isFlipped;
   }, [session.isFlipped, session.currentCard, deckMeta, autoPlay]);
@@ -708,8 +739,17 @@ export default function StudyPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={() => {
-              if ((card as any).audioUrl) {
-                new Audio((card as any).audioUrl).play().catch(() => null);
+              const c = card as any;
+              if (c.audioUrl) {
+                // Dùng lại audio đã preload, reset về đầu
+                if (audioRef.current) {
+                  audioRef.current.currentTime = 0;
+                  audioRef.current.play().catch(() => null);
+                } else {
+                  const a = new Audio(c.audioUrl);
+                  audioRef.current = a;
+                  a.play().catch(() => null);
+                }
               } else if (session.isFlipped) {
                 playTTS(card.back, deckMeta?.backLanguage || "vi");
               } else {

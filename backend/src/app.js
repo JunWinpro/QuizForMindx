@@ -25,7 +25,29 @@ const savedDeckRoutes = require('./routes/savedDeck.routes');
 const app = express();
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
-app.use(cors());
+const ALLOWED_ORIGINS = [
+  "https://quizformindx.web.app",
+  "https://quizformindx.firebaseapp.com", // Firebase fallback domain
+  "http://localhost:5173",                 // Vite dev
+  "http://localhost:3000",
+  ...(process.env.EXTRA_CORS_ORIGINS
+    ? process.env.EXTRA_CORS_ORIGINS.split(",").map((o) => o.trim())
+    : []),
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Cho phép request không có origin (curl, Postman, mobile app)
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS blocked: ${origin}`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // ===== NEW: Security middleware (helmet, rate-limit, mongo-sanitize) =====
 applySecurityMiddleware(app);

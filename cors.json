@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["http://localhost:5173", "https://quizformindx.web.app", "https://quizformindx.firebaseapp.com"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Authorization", "Content-Length"]
+  }
+]
