@@ -24,8 +24,7 @@ const savedDeckRoutes = require('./routes/savedDeck.routes');
 
 const app = express();
 
-// ─── Middleware ──────────────────────────────────────────────────────────────
-const cors = require("cors")
+const cors = require("cors");
 
 app.use(cors({
   origin: [
@@ -35,9 +34,9 @@ app.use(cors({
   ],
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization"]
-}))
+}));
 
-app.options("*", cors())
+app.options("*", cors());
 
 // ===== NEW: Security middleware (helmet, rate-limit, mongo-sanitize) =====
 applySecurityMiddleware(app);
