@@ -37,15 +37,8 @@ const ALLOWED_ORIGINS = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Cho phép request không có origin (curl, Postman, mobile app)
-      if (!origin) return callback(null, true);
-      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-      callback(new Error(`CORS blocked: ${origin}`));
-    },
+    origin: true,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
