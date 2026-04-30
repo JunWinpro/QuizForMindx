@@ -300,6 +300,9 @@ export default function StudyPage() {
   // Preloaded audio cho card hiện tại
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // ── Flip-back duration (phải khớp với CSS transition của FlashcardFlip) ──
+  const FLIP_BACK_MS = 350;
+
   // SRS hook – tải due count cho deck này
   const srs = useSRS(deckId);
 
@@ -403,6 +406,34 @@ export default function StudyPage() {
     }
     prevFlipped.current = session.isFlipped;
   }, [session.isFlipped, session.currentCard, deckMeta, autoPlay]);
+
+  // ── Wrap handlers: lật thẻ về mặt trước trước, rồi mới chuyển card ────
+  const handleKnown = () => {
+    if (session.isFlipped) {
+      session.flipCard();                            // lật ngược về mặt trước
+      setTimeout(() => session.markKnown(), FLIP_BACK_MS);
+    } else {
+      session.markKnown();
+    }
+  };
+
+  const handleUnknown = () => {
+    if (session.isFlipped) {
+      session.flipCard();
+      setTimeout(() => session.markUnknown(), FLIP_BACK_MS);
+    } else {
+      session.markUnknown();
+    }
+  };
+
+  const handleSkip = () => {
+    if (session.isFlipped) {
+      session.flipCard();
+      setTimeout(() => session.skipCard(), FLIP_BACK_MS);
+    } else {
+      session.skipCard();
+    }
+  };
 
   // ── STATE: Chưa chọn mode ─────────────────────────────────────────────
   if (studyMode === null) {
@@ -740,6 +771,7 @@ export default function StudyPage() {
           <button
             onClick={() => {
               const c = card as any;
+              
               if (c.audioUrl) {
                 // Dùng lại audio đã preload, reset về đầu
                 if (audioRef.current) {
@@ -781,9 +813,9 @@ export default function StudyPage() {
           total={session.total}
           progress={session.progress}
           onFlip={session.flipCard}
-          onKnown={session.markKnown}
-          onUnknown={session.markUnknown}
-          onSkip={session.skipCard}
+          onKnown={handleKnown}
+          onUnknown={handleUnknown}
+          onSkip={handleSkip}
         />
       </div>
     </div>
